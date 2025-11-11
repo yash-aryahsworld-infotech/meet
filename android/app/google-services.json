@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "318540822477",
+    "firebase_url": "https://healthcare-plus-d52c0-default-rtdb.firebaseio.com",
+    "project_id": "healthcare-plus-d52c0",
+    "storage_bucket": "healthcare-plus-d52c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318540822477:android:c5cd8af6c2c66f240cf684",
+        "android_client_info": {
+          "package_name": "com.aryahsworld.healthcare_plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG3hskUp7sBSedGU8yfgB9Vx14onmkFJI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
