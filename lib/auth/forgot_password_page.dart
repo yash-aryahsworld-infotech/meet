@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
-
+import './auth_page.dart';
 class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});
 
@@ -12,14 +12,22 @@ class ForgotPasswordPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 2,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthPage()),
+            );
+          },
+        ),
         title: const Text(
           "Forgot Password",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Colors.white,
         centerTitle: true,
-        elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Center(
         child: SingleChildScrollView(
