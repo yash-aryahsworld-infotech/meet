@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signin_page.dart';
 import 'signup_page.dart';
+import '../widgets/custom_toggle_switch.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -10,7 +11,7 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  bool isSignIn = true;
+  int selectedIndex = 0; // 0 = Sign In, 1 = Sign Up
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +44,7 @@ class _AuthPageState extends State<AuthPage> {
                     "Welcome to HealthCare Platform",
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -55,93 +56,22 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 30),
 
-                  // 🔹 Sign In / Sign Up Toggle — styled like Patient/Provider
-                  Container(
-                    height: 45,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F1F5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(
-                      children: [
-                        AnimatedAlign(
-                          alignment: isSignIn
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOutCubic,
-                          child: Container(
-                            width: 150,
-                            height: 37,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  blurRadius: 6,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => isSignIn = true),
-                                child: Center(
-                                  child: AnimatedDefaultTextStyle(
-                                    duration:
-                                    const Duration(milliseconds: 200),
-                                    style: TextStyle(
-                                      color: isSignIn
-                                          ? Colors.black
-                                          : Colors.grey.shade600,
-                                      fontWeight: isSignIn
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                    child: const Text("Sign In"),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => isSignIn = false),
-                                child: Center(
-                                  child: AnimatedDefaultTextStyle(
-                                    duration:
-                                    const Duration(milliseconds: 200),
-                                    style: TextStyle(
-                                      color: !isSignIn
-                                          ? Colors.black
-                                          : Colors.grey.shade600,
-                                      fontWeight: !isSignIn
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                    child: const Text("Sign Up"),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  // 🔹 Reusable toggle
+                  CustomToggleSwitch(
+                    options: const ["Sign In", "Sign Up"],
+                    selectedIndex: selectedIndex,
+                    onSelected: (index) {
+                      setState(() => selectedIndex = index);
+                    },
                   ),
+
                   const SizedBox(height: 30),
 
-                  // 🔹 Smooth transition between Sign In and Sign Up forms
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     transitionBuilder: (child, animation) =>
                         FadeTransition(opacity: animation, child: child),
-                    child: isSignIn
+                    child: selectedIndex == 0
                         ? const SignInForm(key: ValueKey('signIn'))
                         : const SignUpForm(key: ValueKey('signUp')),
                   ),

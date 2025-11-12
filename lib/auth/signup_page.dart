@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/custom_toggle_switch.dart'; // ✅ import reusable toggle
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -16,7 +17,8 @@ class _SignUpFormState extends State<SignUpForm> {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  bool isPatient = true;
+
+  int selectedRole = 0; // 0 = Patient, 1 = Healthcare Provider
 
   @override
   Widget build(BuildContext context) {
@@ -24,120 +26,106 @@ class _SignUpFormState extends State<SignUpForm> {
       key: widget.key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 🔹 Name Fields (Grouped)
         Row(
           children: [
+            // 🧍‍♂️ First Name
             Expanded(
-              child: CustomInputField(
-                labelText: "First Name",
-                icon: Icons.person_outline,
-                controller: firstNameController,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "First Name",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  CustomInputField(
+                    labelText: "Enter your first name",
+                    icon: Icons.person_outline,
+                    controller: firstNameController,
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 10),
+            // 🧍‍♀️ Last Name
             Expanded(
-              child: CustomInputField(
-                labelText: "Last Name",
-                icon: Icons.person_outline,
-                controller: lastNameController,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Last Name",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  CustomInputField(
+                    labelText: "Enter your last name",
+                    icon: Icons.person_outline,
+                    controller: lastNameController,
+                  ),
+                ],
               ),
             ),
           ],
         ),
+
         const SizedBox(height: 20),
+
+        // 🔹 Email
+        const Text(
+          "Email Address",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
+        const SizedBox(height: 6),
         CustomInputField(
-          labelText: "Email",
+          labelText: "Enter your email",
           icon: Icons.email_outlined,
           controller: emailController,
           inputType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
+
+        // 🔹 Phone
+        const Text(
+          "Phone Number",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
+        const SizedBox(height: 6),
         CustomInputField(
-          labelText: "Phone Number",
+          labelText: "Enter your phone number",
           icon: Icons.phone_outlined,
           controller: phoneController,
           inputType: TextInputType.phone,
         ),
         const SizedBox(height: 20),
 
-        // 🔹 Role Toggle
-        const Text("I am a", style: TextStyle(fontWeight: FontWeight.w500)),
+        // 🔹 Role Toggle (Reusable)
+        const Text(
+          "I am a",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
         const SizedBox(height: 8),
-        Container(
-          height: 45,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F1F5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                alignment:
-                isPatient ? Alignment.centerLeft : Alignment.centerRight,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
-                child: Container(
-                  width: 150,
-                  height: 37,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => isPatient = true),
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            color: isPatient
-                                ? Colors.black
-                                : Colors.grey.shade600,
-                            fontWeight: isPatient
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
-                          child: const Text("Patient"),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => isPatient = false),
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            color: !isPatient
-                                ? Colors.black
-                                : Colors.grey.shade600,
-                            fontWeight: !isPatient
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
-                          child: const Text("Healthcare Provider"),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        CustomToggleSwitch(
+          options: const ["Patient", "Healthcare Provider"],
+          selectedIndex: selectedRole,
+          onSelected: (index) => setState(() => selectedRole = index),
         ),
         const SizedBox(height: 20),
+
+        // 🔹 Password
+        const Text(
+          "Password",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
+        const SizedBox(height: 6),
         CustomInputField(
           labelText: "Create a password",
           icon: Icons.lock_outline,
@@ -145,17 +133,28 @@ class _SignUpFormState extends State<SignUpForm> {
           obscureText: true,
         ),
         const SizedBox(height: 20),
+
+        // 🔹 Confirm Password
+        const Text(
+          "Confirm Password",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
+        const SizedBox(height: 6),
         CustomInputField(
-          labelText: "Confirm password",
+          labelText: "Confirm your password",
           icon: Icons.lock_outline,
           controller: confirmPasswordController,
           obscureText: true,
         ),
         const SizedBox(height: 30),
+
+        // 🔹 Submit Button
         CustomButton(
           text: "Create Account",
           onPressed: () {
-            // TODO: handle sign up
+            debugPrint(
+              'Selected role: ${selectedRole == 0 ? "Patient" : "Healthcare Provider"}',
+            );
           },
         ),
       ],
