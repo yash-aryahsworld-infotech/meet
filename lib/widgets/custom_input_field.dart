@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/responsive.dart';
 
 class CustomInputField extends StatelessWidget {
   final String labelText;
@@ -18,24 +19,27 @@ class CustomInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = Responsive(context);
+    final double scaledFont = responsive.scale(14);
+
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: inputType,
-      style: const TextStyle(
-        fontSize: 14, // smaller text size inside the field
+      style: TextStyle(
+        fontSize: scaledFont,
         color: Colors.black87,
       ),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.grey, size: 20), // smaller icon
+        prefixIcon: Icon(icon, color: Colors.grey, size: scaledFont + 4),
         labelText: labelText,
-        labelStyle: const TextStyle(
-          fontSize: 13, // smaller label text
-          color: Colors.grey,
+        labelStyle: TextStyle(
+          fontSize: scaledFont - 1,
+          color: Colors.grey.shade700,
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 12, // reduced height
-          horizontal: 14,
+        contentPadding: EdgeInsets.symmetric(
+          vertical: responsive.isMobile ? 12 : 16,
+          horizontal: responsive.isMobile ? 14 : 18,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
