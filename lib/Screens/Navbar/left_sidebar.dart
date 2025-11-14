@@ -116,12 +116,13 @@ class PerfectSidebar extends StatelessWidget {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  final bool isActive = activeItem?.title == item.title;
+                  final bool isActive = activeItem?.route == item.route;
 
                   return Tooltip(
                     message: collapsed ? item.title : "",
                     child: InkWell(
                       onTap: () => onTap(item),
+
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         margin: const EdgeInsets.symmetric(

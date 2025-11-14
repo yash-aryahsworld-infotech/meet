@@ -32,6 +32,8 @@ class _DashboardPageState extends State<DashboardPage> {
   List<SidebarItem> get sidebarItems {
     if (widget.userRole.toLowerCase() == "patient") {
       return patientSidebar;
+    }if (widget.userRole.toLowerCase() == "corporate") {
+      return corporateSidebar;
     } else {
       return healthProviderSidebar;
     }
@@ -146,9 +148,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: AppResponsive.pagePadding(context),
-                    child: Text(
-                      "Welcome $userName!\nRole: ${widget.userRole}",
-                    ),
+                    child:
+                    activeItem?.page ??
+                        const Center(
+                          child: Text(
+                            "No page selected",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                   ),
                 ),
               ],
