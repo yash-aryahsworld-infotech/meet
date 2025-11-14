@@ -1,11 +1,16 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:healthcare_plus/auth/signin_page.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_toggle_switch.dart';
 
 class SignUpForm extends StatefulWidget {
-  const SignUpForm({super.key});
+  final VoidCallback onSwitchToSignIn;
+
+  const SignUpForm({super.key, required this.onSwitchToSignIn});
 
   @override
   State<SignUpForm> createState() => _SignUpFormState();
@@ -18,8 +23,6 @@ class _SignUpFormState extends State<SignUpForm> {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("healthcare").child("users");
 
   int selectedRole = 0;
   bool _isLoading = false;
@@ -62,7 +65,6 @@ class _SignUpFormState extends State<SignUpForm> {
     return true;
   }
 
-  // 🔹 Snackbar Helper
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
@@ -75,18 +77,29 @@ class _SignUpFormState extends State<SignUpForm> {
 
     setState(() => _isLoading = true);
 
+    String hashPassword(String password) {
+      final bytes = utf8.encode(password);
+      final digest = sha256.convert(bytes);
+      return digest.toString();
+    }
+
     try {
-      final newUser = {
+
+      final DatabaseReference dbRef = FirebaseDatabase.instance.ref().child("healthcare").child("users");
+
+      final newUserRef = dbRef.push();
+      String userKey = newUserRef.key!;
+
+      await dbRef.child(userKey).set({
+        "userKey": userKey,
         "first_name": firstNameController.text.trim(),
         "last_name": lastNameController.text.trim(),
         "email": emailController.text.trim(),
         "phone": phoneController.text.trim(),
         "role": selectedRole == 0 ? "Patient" : "Healthcare Provider",
-        "password": passwordController.text.trim(),
+        "password": hashPassword(passwordController.text.trim()),
         "created_at": DateTime.now().toIso8601String(),
-      };
-
-      await _dbRef.push().set(newUser);
+      });
 
       setState(() => _isLoading = false);
 
@@ -97,13 +110,15 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
       );
 
-      // Clear fields
       firstNameController.clear();
       lastNameController.clear();
       emailController.clear();
       phoneController.clear();
       passwordController.clear();
       confirmPasswordController.clear();
+
+      widget.onSwitchToSignIn();
+
     } catch (e) {
       setState(() => _isLoading = false);
       _showSnackBar("Error saving data: $e");
@@ -113,8 +128,6 @@ class _SignUpFormState extends State<SignUpForm> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
-      bottom: true,
       child: Column(
         key: widget.key,
         crossAxisAlignment: CrossAxisAlignment.start,

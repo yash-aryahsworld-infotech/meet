@@ -162,8 +162,14 @@ class _AuthPageState extends State<AuthPage> {
             transitionBuilder: (child, animation) =>
                 FadeTransition(opacity: animation, child: child),
             child: selectedIndex == 0
-                ? const SignInForm(key: ValueKey('signIn'))
-                : const SignUpForm(key: ValueKey('signUp')),
+              ? const SignInForm(key: ValueKey('signIn'))
+              : SignUpForm(
+            key: const ValueKey('signUp'),
+            onSwitchToSignIn: () {
+              setState(() => selectedIndex = 0); // switch tab
+            },
+          ),
+
           ),
         ],
       ),
