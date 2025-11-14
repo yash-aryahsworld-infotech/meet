@@ -7,6 +7,18 @@ import 'package:healthcare_plus/Screens/HealthProvider/payment_links_component.d
 import 'package:healthcare_plus/Screens/HealthProvider/schedule_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/settings_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/verification_component.dart';
+import 'package:healthcare_plus/Screens/Patient/analytics.dart';
+import 'package:healthcare_plus/Screens/Patient/appointments.dart';
+import 'package:healthcare_plus/Screens/Patient/health_record.dart';
+import 'package:healthcare_plus/Screens/Patient/help_and_support.dart';
+import 'package:healthcare_plus/Screens/Patient/insurance.dart';
+import 'package:healthcare_plus/Screens/Patient/payments.dart';
+import 'package:healthcare_plus/Screens/Patient/prescriptions.dart';
+import 'package:healthcare_plus/Screens/Patient/privacy_and_consent.dart';
+import 'package:healthcare_plus/Screens/Patient/security.dart';
+import 'package:healthcare_plus/Screens/Patient/upload_documents.dart';
+import 'package:healthcare_plus/Screens/Patient/wallet.dart';
+import 'package:healthcare_plus/Screens/Patient/wellness.dart';
 
 import '../Corporate/analytics_page.dart';
 import '../Corporate/billing_page.dart';
@@ -14,6 +26,8 @@ import '../Corporate/corporate_home_page.dart';
 import '../Corporate/employee_page.dart';
 import '../Corporate/programs_page.dart';
 import '../Corporate/settings_page.dart';
+import '../Patient/book_consultation.dart';
+import '../Patient/patient_dashboard.dart';
 
 /// Dynamic Sidebar model and role-based lists.
 /// Edit these arrays to change icons, titles, routes and notification counts.
@@ -41,44 +55,86 @@ final List<SidebarItem> patientSidebar = [
   SidebarItem(
     icon: Icons.dashboard,
     title: 'Dashboard',
-    route: '/dashboard',
+    route: '/patientdashboard',
+    page: PatientDashboard(),
+  ),
+  SidebarItem(
+    icon: Icons.video_call,
+    title: 'Book Consultation',
+    route: '/bookconsultation',
+    page: BookConsultation(),
+  ),
+  SidebarItem(
+    icon: Icons.calendar_today_outlined,
+    title: 'Appointments',
+    route: '/appointments',
+    page: Appointments(),
+  ),
+  SidebarItem(
+    icon: Icons.medication_outlined,
+    title: 'Prescriptions',
+    route: '/prescriptions',
+    page: Prescriptions(),
   ),
   SidebarItem(
     icon: Icons.folder_shared,
     title: 'Health Records',
     route: '/health-records',
+    page: HealthRecord(),
   ),
   SidebarItem(
     icon: Icons.upload_file,
     title: 'Upload Documents',
     route: '/upload-docs',
+    page: UploadDocuments(),
   ),
   SidebarItem(
-    icon: Icons.shield,
+    icon: Icons.shield_outlined,
     title: 'Insurance',
     route: '/insurance',
-    notificationCount: 0,
+    page: Insurance(),
   ),
   SidebarItem(
     icon: Icons.favorite,
     title: 'Wellness',
     route: '/wellness',
+    page: Wellness(),
   ),
   SidebarItem(
     icon: Icons.show_chart,
     title: 'Analytics',
     route: '/analytics',
+    page: Analytics(),
   ),
   SidebarItem(
-    icon: Icons.settings,
+    icon: Icons.shield,
     title: 'Security',
     route: '/security',
+    page: Security(),
+  ),
+  SidebarItem(
+    icon: Icons.payment,
+    title: 'Payments',
+    route: '/payments',
+    page: Payments(),
+  ),
+  SidebarItem(
+    icon: Icons.wallet,
+    title: 'Wallet',
+    route: '/wallet',
+    page: Wallet(),
+  ),
+  SidebarItem(
+    icon: Icons.privacy_tip_outlined,
+    title: 'Privacy & Consent',
+    route: '/privacyconsent',
+    page: PrivacyAndConsent(),
   ),
   SidebarItem(
     icon: Icons.help_outline,
     title: 'Help & Support',
     route: '/help',
-    notificationCount: 2,
+    page: HelpAndSupport(),
   ),
 ];
 
@@ -89,7 +145,7 @@ final List<SidebarItem> healthProviderSidebar = [
       title: 'Dashboard',
       route: '/doctor/dashboard',
       page: HealthProviderDashboard(),
-      notificationCount: 2 // blue selected item
+
   ),
 
   SidebarItem(
@@ -155,7 +211,7 @@ final List<SidebarItem> corporateSidebar = [
   SidebarItem(
     icon: Icons.people_alt_outlined,
     title: 'Employees',
-    route: '/doctor/employees',
+    route: '/corporate/employees',
     page: CorporateEmployeesPage(),
   ),
 

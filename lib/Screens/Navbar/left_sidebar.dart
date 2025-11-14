@@ -89,7 +89,11 @@ class PerfectSidebar extends StatelessWidget {
                 mainAxisAlignment:
                 collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
                 children: [
-                  const Icon(Icons.favorite, color: Colors.blue, size: 30),
+                  Image.asset(
+                    'assets/logo/only_logo.png',
+                    width: 50,
+                    height: 50,
+                  ),
 
                   if (!collapsed) ...[
                     const SizedBox(width: 10),
