@@ -46,8 +46,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // 🔥 Fetch user name from Firebase by userKey
   Future<void> _loadUserDetails() async {
-    final ref = FirebaseDatabase.instance
-        .ref("healthcare/users/${widget.userKey}");
+    final ref = FirebaseDatabase.instance.ref(
+      "healthcare/users/${widget.userKey}",
+    );
 
     final snapshot = await ref.get();
 
@@ -71,9 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final bool isWeb = AppResponsive.isDesktop(context);
 
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -83,30 +82,30 @@ class _DashboardPageState extends State<DashboardPage> {
       // MOBILE NAVBAR
       appBar: !isWeb
           ? PreferredSize(
-        preferredSize: Size.fromHeight(AppResponsive.navbarHeight),
-        child: SafeArea(
-          child: PerfectNavbar(
-            onMenuPressed: () => _key.currentState?.openDrawer(),
-          ),
-        ),
-      )
+              preferredSize: Size.fromHeight(AppResponsive.navbarHeight),
+              child: SafeArea(
+                child: PerfectNavbar(
+                  onMenuPressed: () => _key.currentState?.openDrawer(),
+                ),
+              ),
+            )
           : null,
 
       // MOBILE DRAWER
       drawer: !isWeb
           ? Drawer(
-        child: PerfectSidebar(
-          collapsed: false,
-          items: sidebarItems,
-          activeItem: activeItem,
-          onTap: (item) {
-            setState(() => activeItem = item);
-            Navigator.pop(context);
-          },
-          userName: userName,
-          userRole: widget.userRole,
-        ),
-      )
+              child: PerfectSidebar(
+                collapsed: false,
+                items: sidebarItems,
+                activeItem: activeItem,
+                onTap: (item) {
+                  setState(() => activeItem = item);
+                  Navigator.pop(context);
+                },
+                userName: userName,
+                userRole: widget.userRole,
+              ),
+            )
           : null,
 
       // WEB LAYOUT
@@ -146,9 +145,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: AppResponsive.pagePadding(context),
-                    child: Text(
-                      "Welcome $userName!\nRole: ${widget.userRole}",
-                    ),
+                    child:
+                        activeItem?.page ??
+                        const Center(
+                          child: Text(
+                            "No page selected",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                   ),
                 ),
               ],

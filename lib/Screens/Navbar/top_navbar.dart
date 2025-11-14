@@ -46,6 +46,7 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
           /// CENTER: SEARCH BAR (Always)
           /// ----------------------------------------------------
           Expanded(
+            flex: isWeb ? 4 : 6, 
             child: Container(
               height: 42,
               decoration: BoxDecoration(
