@@ -32,6 +32,8 @@ class _DashboardPageState extends State<DashboardPage> {
   List<SidebarItem> get sidebarItems {
     if (widget.userRole.toLowerCase() == "patient") {
       return patientSidebar;
+    } else if(widget.userRole.toLowerCase() == "corporate") {
+      return corporateSidebar;
     } else {
       return healthProviderSidebar;
     }
