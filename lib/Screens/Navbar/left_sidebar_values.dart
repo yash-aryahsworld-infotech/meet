@@ -8,6 +8,13 @@ import 'package:healthcare_plus/Screens/HealthProvider/schedule_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/settings_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/verification_component.dart';
 
+import '../Corporate/analytics_page.dart';
+import '../Corporate/billing_page.dart';
+import '../Corporate/corporate_home_page.dart';
+import '../Corporate/employee_page.dart';
+import '../Corporate/programs_page.dart';
+import '../Corporate/settings_page.dart';
+
 /// Dynamic Sidebar model and role-based lists.
 /// Edit these arrays to change icons, titles, routes and notification counts.
 
@@ -78,11 +85,11 @@ final List<SidebarItem> patientSidebar = [
 /// Example Sidebar for DOCTOR role
 final List<SidebarItem> healthProviderSidebar = [
   SidebarItem(
-    icon: Icons.home_rounded,
-    title: 'Dashboard',
-    route: '/doctor/dashboard',
-    page: HealthProviderDashboard(),
-    notificationCount: 2 // blue selected item
+      icon: Icons.home_rounded,
+      title: 'Dashboard',
+      route: '/doctor/dashboard',
+      page: HealthProviderDashboard(),
+      notificationCount: 2 // blue selected item
   ),
 
   SidebarItem(
@@ -108,10 +115,10 @@ final List<SidebarItem> healthProviderSidebar = [
   ),
 
   SidebarItem(
-    icon: Icons.monitor_heart_outlined,
-    title: 'Earnings',
-    route: '/doctor/earnings',
-    page: EarningsComponent()
+      icon: Icons.monitor_heart_outlined,
+      title: 'Earnings',
+      route: '/doctor/earnings',
+      page: EarningsComponent()
   ),
 
   SidebarItem(
@@ -133,5 +140,51 @@ final List<SidebarItem> healthProviderSidebar = [
     title: 'Settings',
     route: '/doctor/settings',
     page: SettingsComponent(),
+  ),
+];
+
+final List<SidebarItem> corporateSidebar = [
+  SidebarItem(
+      icon: Icons.home_rounded,
+      title: 'Dashboard',
+      route: '/corporate/dashboard',
+      page: CorporateDashboard(),
+      notificationCount: 2 // blue selected item
+  ),
+
+  SidebarItem(
+    icon: Icons.people_alt_outlined,
+    title: 'Employees',
+    route: '/doctor/employees',
+    page: CorporateEmployeesPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.favorite,
+    title: 'Programs',
+    route: '/corporate/programs',
+    notificationCount: 12,
+    page: CorporateProgramsPage(), // badge like image
+  ),
+
+  SidebarItem(
+    icon: Icons.chat_bubble_outline,
+    title: 'Analytics',
+    route: '/corporate/analytics',
+    page: CorporateAnalyticsPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.monitor_heart_outlined,
+    title: 'Billings',
+    route: '/corporate/billings',
+    page: CorporateBillingPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.link,
+    title: 'Settings',
+    route: '/corporate/settings',
+    page: CorporateSettingsPage(),
   ),
 ];
