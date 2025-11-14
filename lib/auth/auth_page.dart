@@ -164,7 +164,7 @@ class _AuthPageState extends State<AuthPage> {
             child: selectedIndex == 0
               ? const SignInForm(key: ValueKey('signIn'))
               : SignUpForm(
-            key: const ValueKey('signUp'),
+            key: const ValueKey('signUp'),g
             onSwitchToSignIn: () {
               setState(() => selectedIndex = 0); // switch tab
             },
