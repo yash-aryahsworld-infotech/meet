@@ -5,6 +5,8 @@ import "../../widgets/header_section.dart";
 import "../../widgets/stats_section.dart";
 import "../../widgets/schedule_section.dart";
 import "../../widgets/earnings_section.dart";
+import "../../widgets/quick_actions_section.dart";
+import "../../widgets/patient_overview_section.dart";
 
 class HealthProviderDashboard extends StatelessWidget {
   const HealthProviderDashboard({super.key});
@@ -22,7 +24,6 @@ class HealthProviderDashboard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// HEADER — always full width
             const HeaderSection(
               doctorName: "Dr. Priya",
               appointmentsToday: 12,
@@ -31,40 +32,66 @@ class HealthProviderDashboard extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            /// Stats section — responsive inside
             const StatsSection(),
-
             const SizedBox(height: 20),
 
-            /// MAIN SCHEDULE + EARNINGS RESPONSIVE LAYOUT
+            /// --------------------------------------------------------
+            /// RESPONSIVE LAYOUT
+            /// --------------------------------------------------------
             if (isMobile) ...[
-              /// MOBILE (one column)
+              /// ---------------------- MOBILE (Corrected) ----------------------
               const ScheduleSection(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
               const EarningsSection(),
+              const SizedBox(height: 16),
+
+              const QuickActionsSection(),
+              const SizedBox(height: 16),
+
+              const PatientOverviewSection(),
             ]
+
             else if (isTablet) ...[
-              /// TABLET (two equal columns)
+              /// ---------------------- TABLET ----------------------
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Expanded(flex: 1, child: ScheduleSection()),
+                  Expanded(child: ScheduleSection()),
                   SizedBox(width: 20),
-                  Expanded(flex: 1, child: EarningsSection()),
+                  Expanded(child: EarningsSection()),
                 ],
-              )
+              ),
+              const SizedBox(height: 20),
+              const QuickActionsSection(),
+              const SizedBox(height: 20),
+              const PatientOverviewSection(),
             ]
+
             else if (isDesktop) ...[
-                /// DESKTOP (wide schedule, smaller earnings)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Expanded(flex: 7, child: ScheduleSection()),
-                    SizedBox(width: 20),
-                    Expanded(flex: 5, child: EarningsSection()),
-                  ],
-                )
-              ],
+              /// ---------------------- DESKTOP ----------------------
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Expanded(flex: 7, child: ScheduleSection()),
+                  SizedBox(width: 20),
+                  Expanded(flex: 5, child: EarningsSection()),
+                ],
+              ),
+
+              const SizedBox(height: 25),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Spacer(flex: 7),
+                  Expanded(flex: 5, child: QuickActionsSection()),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+              const PatientOverviewSection(),
+            ],
           ],
         ),
       ),

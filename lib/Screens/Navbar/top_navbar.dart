@@ -31,8 +31,9 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
       padding: EdgeInsets.symmetric(horizontal: isWeb ? 24 : 12),
       child: Row(
         children: [
+
           /// ----------------------------------------------------
-          /// LEFT SIDE: SIDEBAR TOGGLE BUTTON (Always)
+          /// SIDEBAR MENU BUTTON (Always)
           /// ----------------------------------------------------
           IconButton(
             onPressed: onMenuPressed,
@@ -43,10 +44,10 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 15),
 
           /// ----------------------------------------------------
-          /// CENTER: SEARCH BAR (Always)
+          /// SEARCH BAR (Always)
           /// ----------------------------------------------------
           Expanded(
-            flex: isWeb ? 4 : 6, 
+            flex: isWeb ? 4 : 6,
             child: Container(
               height: 42,
               decoration: BoxDecoration(
@@ -59,11 +60,15 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   Icon(Icons.search, color: Colors.grey.shade600),
                   const SizedBox(width: 10),
+
+                  /// CENTERED TEXT FIELD ★★★★★
                   const Expanded(
                     child: TextField(
+                      textAlignVertical: TextAlignVertical.center,
                       decoration: InputDecoration(
                         hintText: "Search...",
                         border: InputBorder.none,
+                        isCollapsed: true,
                       ),
                     ),
                   ),
@@ -75,20 +80,20 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
           const Spacer(),
 
           /// ----------------------------------------------------
-          /// RIGHT SIDE — LANGUAGE (Mobile + Tablet + Web)
+          /// LANGUAGE ICON + TEXT
           /// ----------------------------------------------------
           Row(
             children: [
               const Icon(Icons.language, size: 22, color: Colors.black87),
               if (isWeb) ...[
-                const SizedBox(width: 5),
+                const SizedBox(width: 6),
                 Text(
                   "GB English",
                   style: TextStyle(
                     fontSize: AppResponsive.fontSM(context),
                     fontWeight: AppResponsive.medium,
                   ),
-                )
+                ),
               ]
             ],
           ),
@@ -96,7 +101,7 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 20),
 
           /// ----------------------------------------------------
-          /// WEB-ONLY: Patient badge
+          /// PATIENT BADGE (Web only)
           /// ----------------------------------------------------
           if (isWeb)
             Container(
@@ -123,16 +128,20 @@ class PerfectNavbar extends StatelessWidget implements PreferredSizeWidget {
           if (isWeb) const SizedBox(width: 25),
 
           /// ----------------------------------------------------
-          /// NOTIFICATION BELL (Always)
+          /// NOTIFICATION BELL
           /// ----------------------------------------------------
           Stack(
             clipBehavior: Clip.none,
             children: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.notifications_none,
-                    color: Colors.black87),
+                icon: const Icon(
+                  Icons.notifications_none,
+                  color: Colors.black87,
+                ),
               ),
+
+              /// Notification dot
               Positioned(
                 right: 4,
                 top: 4,
