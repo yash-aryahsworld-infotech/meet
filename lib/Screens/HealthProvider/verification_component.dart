@@ -17,10 +17,10 @@ class _VerificationComponentState extends State<VerificationComponent> {
   Widget build(BuildContext context) {
     bool isMobile = AppResponsive.isMobile(context);
     bool isTablet = AppResponsive.isTablet(context);
-    bool isDesktop = AppResponsive.isDesktop(context);
+
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: AppResponsive.pagePadding(context),
       child: Center(
         child: Container(
           width: double.infinity,

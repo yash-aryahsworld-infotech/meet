@@ -54,7 +54,7 @@ class AppResponsive {
 
   /// Global horizontal padding for navbar & page sections
   static double horizontalPadding(BuildContext ctx) {
-    if (isDesktop(ctx)) return 24;
+    if (isDesktop(ctx)) return 16;
     if (isTablet(ctx)) return 20;
     return 16; // mobile
   }

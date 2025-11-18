@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
+
 import './patientscomponents/all_patients_tab.dart';
 import './patientscomponents/recent_visits_tab.dart';
 import './patientscomponents/upcoming_patients_tab.dart';
+
 import '../../widgets/custom_tab.dart'; // TabToggle
+import '../../widgets/custom_header.dart'; // ⭐ IMPORT PAGE HEADER
 
 class PatientsComponent extends StatefulWidget {
   const PatientsComponent({super.key});
@@ -21,31 +25,29 @@ class _PatientsComponentState extends State<PatientsComponent> {
   ];
 
   final List<int> tabCounts = [
-    134, // All Patients
-    18,  // Recent Visits
-    12,  // Upcoming
+    134,
+    18,
+    12,
   ];
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: AppResponsive.pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Title ----
-          const Text(
-            "Patient Management",
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          // -------------------------------------------------------------
+          // ⭐ CUSTOM PAGE HEADER
+          // -------------------------------------------------------------
+          const PageHeader(
+            title: "Patient Management",
+            subtitle: "Manage your patients and view their information",
           ),
-          const SizedBox(height: 4),
-          const Text(
-            "Manage your patients and view their information",
-            style: TextStyle(fontSize: 15, color: Colors.grey),
-          ),
-          const SizedBox(height: 30),
 
-          // ---- Search bar ----
+          // -------------------------------------------------------------
+          // Search Bar
+          // -------------------------------------------------------------
           Container(
             height: 45,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -72,22 +74,26 @@ class _PatientsComponentState extends State<PatientsComponent> {
 
           const SizedBox(height: 30),
 
-          // ---- Decorative Background Container with TabToggle ----
-         Align(
-  alignment: Alignment.centerLeft,
-  child: TabToggle(
-    options: tabTitles,
-    counts: tabCounts,
-    selectedIndex: selectedTab,
-    onSelected: (index) {
-      setState(() => selectedTab = index);
-    },
-  ),
-),
+          // -------------------------------------------------------------
+          // Tabs (Responsive TabToggle)
+          // -------------------------------------------------------------
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TabToggle(
+              options: tabTitles,
+              counts: tabCounts,
+              selectedIndex: selectedTab,
+              onSelected: (index) {
+                setState(() => selectedTab = index);
+              },
+            ),
+          ),
 
           const SizedBox(height: 20),
 
-          // ---- Tab Content ----
+          // -------------------------------------------------------------
+          // Tab Content
+          // -------------------------------------------------------------
           _buildTabContent(),
         ],
       ),
