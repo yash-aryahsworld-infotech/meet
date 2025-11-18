@@ -18,6 +18,6 @@ class _WellnessState extends State<Wellness> {
           fontWeight: FontWeight.bold,
         ),
       ),
-    );;
+    );
   }
 }

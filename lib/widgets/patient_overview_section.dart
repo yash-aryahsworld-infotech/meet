@@ -7,6 +7,7 @@ class PatientOverviewSection extends StatelessWidget {
   Widget overviewItem(String value, String label, Color color) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           value,
@@ -19,7 +20,11 @@ class PatientOverviewSection extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -39,6 +44,7 @@ class PatientOverviewSection extends StatelessWidget {
           BoxShadow(color: Colors.black12, blurRadius: 6),
         ],
       ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,9 +65,16 @@ class PatientOverviewSection extends StatelessWidget {
               children: [
                 overviewItem("245", "Total Patients", Colors.blue),
                 const SizedBox(height: 20),
+                Container(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 20),
+
                 overviewItem("89%", "Satisfaction Rate", Colors.green),
                 const SizedBox(height: 20),
-                overviewItem("156", "Consultations This Month", Colors.teal),
+                Container(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 20),
+
+                overviewItem(
+                    "156", "Consultations This Month", Colors.teal),
               ],
             )
 
