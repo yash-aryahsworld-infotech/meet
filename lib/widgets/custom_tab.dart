@@ -60,7 +60,15 @@ class _TabToggleState extends State<TabToggle> {
   @override
   Widget build(BuildContext context) {
     final responsive = Responsive(context);
-    final double adjustedFontSize = responsive.scale(widget.fontSize);
+    double adjustedFontSize;
+
+    if (responsive.isDesktop) {
+      adjustedFontSize = widget.fontSize + 2; // bigger text for web
+    } else if (responsive.isTablet) {
+      adjustedFontSize = widget.fontSize + 1; // medium for tablet
+    } else {
+      adjustedFontSize = widget.fontSize; // default for mobile
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -111,20 +119,18 @@ class _TabToggleState extends State<TabToggle> {
 
                     // ---------------- FOREGROUND TABS ----------------
                     Row(
-                      children:
-                          List.generate(widget.options.length, (index) {
+                      children: List.generate(widget.options.length, (index) {
                         final int? count =
                             widget.counts != null &&
-                                    widget.counts!.length > index
-                                ? widget.counts![index]
-                                : null;
+                                widget.counts!.length > index
+                            ? widget.counts![index]
+                            : null;
 
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: MeasureSize(
                             onChange: (size) {
-                              if (_itemWidths.length <
-                                  widget.options.length) {
+                              if (_itemWidths.length < widget.options.length) {
                                 _itemWidths.add(size.width);
                               } else {
                                 _itemWidths[index] = size.width;
@@ -147,37 +153,32 @@ class _TabToggleState extends State<TabToggle> {
                                       style: TextStyle(
                                         fontSize: adjustedFontSize,
                                         fontWeight: FontWeight.w600,
-                                        color:
-                                            widget.selectedIndex == index
-                                                ? Colors.black
-                                                : Colors
-                                                    .grey.shade700,
+                                        color: widget.selectedIndex == index
+                                            ? Colors.black
+                                            : Colors.grey.shade700,
                                       ),
                                     ),
                                     if (count != null && count > 0) ...[
                                       const SizedBox(width: 6),
                                       Container(
-                                        padding:
-                                            const EdgeInsets.symmetric(
+                                        padding: const EdgeInsets.symmetric(
                                           horizontal: 6,
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: widget.selectedIndex ==
-                                                  index
+                                          color: widget.selectedIndex == index
                                               ? Colors.blue
                                               : Colors.grey.shade600,
-                                          borderRadius:
-                                              BorderRadius.circular(
-                                                  12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: Text(
                                           count.toString(),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
-                                            fontWeight:
-                                                FontWeight.bold,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
