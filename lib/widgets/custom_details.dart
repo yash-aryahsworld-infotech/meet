@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/app_responsive.dart';
 
 class PaymentDetailRow extends StatelessWidget {
   final String name;

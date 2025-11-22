@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/custom_button.dart';
-import '../../../widgets/custom_input_field.dart'; // ← Your input component
+import '../../../widgets/custom_input_field.dart';
 
 class ProfileSettings extends StatefulWidget {
   const ProfileSettings({super.key});
@@ -22,6 +22,10 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   // Specialties
   final List<String> specialties = ["General Medicine"];
   final TextEditingController specialtyController = TextEditingController();
+
+  // ---------------- NEW: Achievements Controllers ----------------
+  final List<String> achievements = ["Best Doctor Award 2023"];
+  final TextEditingController achievementController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -60,15 +64,13 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                 child: const Icon(Icons.person, size: 40),
               ),
               const SizedBox(width: 16),
-
-              // ❗ KEEP NORMAL BUTTON OR SWITCH TO CustomButton OUTLINED
               SizedBox(
                 height: 50,
                 width: 160,
                 child: CustomButton(
                   height: 30,
                   text: "Change Photo",
-                  buttonPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+                  buttonPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
                   icon: Icons.camera_alt_outlined,
                   colors: const [Colors.white, Colors.white],
                   textColor: Colors.black,
@@ -134,7 +136,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 16),
 
-          // ---------------- BIO (Old input field) ----------------
+          // ---------------- BIO ----------------
           _inputField("Professional Bio", "", maxLines: 4),
 
           const SizedBox(height: 30),
@@ -162,25 +164,16 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 16),
 
-          // ---------------- ADD SPECIALTY ----------------
+          // Add Specialty Input
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: specialtyController,
-                  decoration: InputDecoration(
-                    hintText: "Add specialty (e.g., Cardiology)",
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
+                  decoration: _inputDecoration("Add specialty (e.g., Cardiology)"),
                 ),
               ),
               const SizedBox(width: 10),
-
               SizedBox(
                 height: 50,
                 width: 100,
@@ -205,16 +198,92 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 30),
 
+          // ---------------- NEW: ACHIEVEMENTS SECTION ----------------
+          const Text(
+            "Achievements & Awards",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+
+          // Display Achievements Chips
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: achievements.map((a) {
+              return Chip(
+                label: Text(a),
+                backgroundColor: Colors.amber.shade50, // Different color for awards
+                side: BorderSide(color: Colors.amber.shade200),
+                deleteIcon: const Icon(Icons.close, size: 18),
+                onDeleted: () => setState(() => achievements.remove(a)),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Add Achievement Input
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: achievementController,
+                  decoration: _inputDecoration("Add achievement (e.g., Gold Medalist)"),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 50,
+                width: 100,
+                child: CustomButton(
+                  text: "Add",
+                  textColor: Colors.black,
+                  outlineColor: Colors.grey,
+                  colors: const [Colors.white, Colors.white],
+                  onPressed: () {
+                    final value = achievementController.text.trim();
+                    if (value.isNotEmpty && !achievements.contains(value)) {
+                      setState(() {
+                        achievements.add(value);
+                        achievementController.clear();
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
           // ---------------- SAVE PROFILE ----------------
           SizedBox(
             width: 200,
             child: CustomButton(
               text: "Save Profile",
               icon: Icons.save,
-              onPressed: () {},
+              onPressed: () {
+                // TODO: Handle Save Logic
+                print("Saved Specialties: $specialties");
+                print("Saved Achievements: $achievements");
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Helper for Input Decoration to avoid code repetition
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
       ),
     );
   }
