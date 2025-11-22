@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare_plus/utils/app_responsive.dart';
 
 class StatsCard extends StatelessWidget {
   final String title;
@@ -17,44 +16,31 @@ class StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Determine if device is mobile based on width
+    final bool isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
-      height: 50, // 🔥 Smaller height than before
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppResponsive.spaceSM,
-        vertical: AppResponsive.spaceXS,
+      height: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 20, // Less padding on mobile
+        vertical: 10,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppResponsive.radiusMD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: Colors.black.withAlpha(8),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Smaller icon badge
-          Container(
-            height: 20,   // 🔥 smaller
-            width: 20,    // 🔥 circle fixed
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.18),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 18, // 🔥 smaller icon
-            ),
-          ),
-
-          const SizedBox(width: AppResponsive.spaceSM),
-
-          // Text column
+          // 2. Expanded prevents the column from pushing the icon off-screen
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -62,25 +48,40 @@ class StatsCard extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1, // Ensures it stays on one line
+                  overflow: TextOverflow.ellipsis, // Adds "..." if still too long
                   style: TextStyle(
-                    fontSize: AppResponsive.fontXS(context), // 🔥 smaller title
-                    fontWeight: AppResponsive.medium,
-                    color: Colors.grey.shade600,
+                    // 3. Dynamic Font Size: Smaller on mobile
+                    fontSize: isMobile ? 11 : 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade500,
                   ),
                 ),
-
-                const SizedBox(height: 2), // 🔥 tiny spacing
-
+                const SizedBox(height: 6),
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: AppResponsive.fontSM(context), // 🔥 smaller value
-                    fontWeight: AppResponsive.bold,
+                    // 3. Dynamic Font Size: Smaller on mobile
+                    fontSize: isMobile ? 18 : 22,
+                    fontWeight: FontWeight.bold,
                     color: Colors.black87,
+                    height: 1.0,
                   ),
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(width: 8), // Space between text and icon
+
+          // Icon
+          Icon(
+            icon,
+            color: color,
+            // 3. Dynamic Icon Size: Smaller on mobile
+            size: isMobile ? 22 : 28,
           ),
         ],
       ),

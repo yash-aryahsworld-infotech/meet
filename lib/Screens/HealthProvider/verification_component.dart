@@ -54,7 +54,7 @@ class _VerificationComponentState extends State<VerificationComponent> {
                     Text(
                       "Doctor Verification Portal",
                       style: TextStyle(
-                        fontSize: AppResponsive.fontXL(context),
+                        fontSize:  isMobile ? AppResponsive.fontLG(context) : AppResponsive.fontXL(context),
                         fontWeight: AppResponsive.semiBold,
                       ),
                     )

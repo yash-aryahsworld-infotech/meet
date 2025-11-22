@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:healthcare_plus/utils/app_responsive.dart';
 
 import "../../widgets/header_section.dart";
-import "../../widgets/stats_section.dart";
+import "./stats_section.dart";
 import "../../widgets/schedule_section.dart";
 import "../../widgets/earnings_section.dart";
 import "../../widgets/quick_actions_section.dart";
 import "../../widgets/patient_overview_section.dart";
+
 
 class HealthProviderDashboard extends StatelessWidget {
   const HealthProviderDashboard({super.key});

@@ -2,6 +2,29 @@ import 'package:flutter/material.dart';
 import '../utils/app_responsive.dart';
 import './custom_button.dart';
 
+// custom_header.dart
+
+//  PageHeader(
+        //   title: "Earnings Dashboard",
+        //   subtitle: "Track your consultation earnings and payments",
+        //   button1Icon: Icons.download,
+        //   button1Text: "Export Reports",
+        //   button1OnPressed: () {},
+        //   button2Icon: Icons.download,
+        //   button2Text: "Export Reports",
+        //   button2OnPressed: () {},
+        //   padding: AppResponsive.pagePadding(context),
+        // ),
+
+
+
+
+
+
+
+
+
+
 class PageHeader extends StatelessWidget {
   final String title;
 
@@ -101,10 +124,9 @@ class PageHeader extends StatelessWidget {
                   ),
                 ],
 
-                const SizedBox(height: AppResponsive.spaceLG),
-
                 // BUTTONS
                 if (hasButton1 || hasButton2)
+                  const SizedBox(height: AppResponsive.spaceLG),
                   Row(
                     children: [
                       if (hasButton1)

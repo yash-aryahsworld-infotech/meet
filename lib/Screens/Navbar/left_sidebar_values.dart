@@ -196,6 +196,7 @@ final List<SidebarItem> healthProviderSidebar = [
     title: 'Settings',
     route: '/doctor/settings',
     page: SettingsComponent(),
+
   ),
 ];
 

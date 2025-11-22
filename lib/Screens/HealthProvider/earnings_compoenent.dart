@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/Screens/HealthProvider/earningscomponents/pendingpaymentscomponent.dart';
+import 'package:healthcare_plus/Screens/HealthProvider/earningscomponents/recentpaymentscomponent.dart';
 import '../../widgets/custom_header.dart';
 import '../../utils/app_responsive.dart';
 import './earningscomponents/earnings_stat_card.dart';
 import '../../widgets/custom_tab.dart';
-import './earningscomponents/payment_details_list.dart'; // ⭐ NEW COMPONENT
 import './earningscomponents/analytics_card.dart'; // ⭐ NEW COMPONENT
 
 class EarningsComponent extends StatefulWidget {
@@ -28,37 +29,6 @@ class _EarningsComponentState extends State<EarningsComponent> {
     0,
   ];
 
-  final List<Map<String, dynamic>> paymentData = [
-    {
-      "name": "Priya Sharma",
-      "type": "Video Consultation",
-      "date": "15/01/2024",
-      "amount": 500,
-      "status": "paid",
-    },
-    {
-      "name": "Rahul Kumar",
-      "type": "In-Person Consultation",
-      "date": "14/01/2024",
-      "amount": 750,
-      "status": "paid",
-    },
-    {
-      "name": "Anita Patel",
-      "type": "Audio Consultation",
-      "date": "13/01/2024",
-      "amount": 400,
-      "status": "pending",
-    },
-    {
-      "name": "Vikram Singh",
-      "type": "Video Consultation",
-      "date": "10/01/2024",
-      "amount": 600,
-      "status": "overdue",
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -71,7 +41,7 @@ class _EarningsComponentState extends State<EarningsComponent> {
           button1Icon: Icons.download,
           button1Text: "Export Reports",
           button1OnPressed: () {},
-          padding: AppResponsive.pagePadding(context),
+          padding: EdgeInsets.zero, // Padding handled by parent
         ),
 
         const SizedBox(height: 20),
@@ -104,16 +74,11 @@ class _EarningsComponentState extends State<EarningsComponent> {
 
         const SizedBox(height: 20),
 
-        /// WHITE CONTAINER FOR TAB CONTENT
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: _buildTabContent(),
-        ),
+        /// TAB CONTENT
+        // I removed the outer White Container because the components
+        // (RecentPayment, PendingPayment, AnalyticsCard) are already Cards
+        // with their own white background and shadows.
+        _buildTabContent(),
       ],
     );
   }
@@ -122,38 +87,28 @@ class _EarningsComponentState extends State<EarningsComponent> {
   Widget _buildTabContent() {
     switch (selectedTab) {
       case 0: // Payment History
-        return PaymentDetailsList(
-          title: "Recent Payments",
-          subtitle: "Your latest payment transactions",
-          buttonText: "View",
-          payments: paymentData,
-        );
+        return const RecentPaymentsComponent();
 
       case 1: // Pending Payments
-        return PaymentDetailsList(
-          title: "Pending Payments",
-          subtitle: "Payments awaiting processing",
-          buttonText: "Follow Up",
-          payments: paymentData.where((p) => p["status"] != "paid").toList(),
-        );
+        return const PendingPaymentsComponent();
 
       case 2: // Analytics
         return Column(
           children: [
-            AnalyticsCard(
+            const AnalyticsCard(
               title: "Earnings Analytics",
               subtitle: "Detailed breakdown of your earnings",
               type: AnalyticsType.list,
               items: [
-                {"label": "Video Consultations", "value": "65% (₹0)"},
-                {"label": "In-Person Consultations", "value": "25% (₹0)"},
-                {"label": "Audio Consultations", "value": "10% (₹0)"},
+                {"label": "Video Consultations", "value": "65% (₹15,000)"},
+                {"label": "In-Person Consultations", "value": "25% (₹5,500)"},
+                {"label": "Audio Consultations", "value": "10% (₹2,200)"},
               ],
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            AnalyticsCard(
+            const AnalyticsCard(
               title: "Performance Metrics",
               subtitle: "Key performance indicators",
               type: AnalyticsType.grid,
@@ -178,27 +133,27 @@ class _EarningsComponentState extends State<EarningsComponent> {
       const EarningsStatCard(
         title: "Total Earnings",
         icon: Icons.attach_money,
-        amount: "₹0",
-        subtext: "From 0 consultations",
+        amount: "₹22,700",
+        subtext: "From 32 consultations",
       ),
       const EarningsStatCard(
         title: "This Month",
         icon: Icons.calendar_today,
-        amount: "₹0",
+        amount: "₹8,450",
         percentageChange: "+12% from last month",
         positive: true,
       ),
       const EarningsStatCard(
         title: "This Week",
         icon: Icons.trending_up,
-        amount: "₹0",
+        amount: "₹2,100",
         percentageChange: "+8% from last week",
         positive: true,
       ),
       const EarningsStatCard(
         title: "Average Fee",
         icon: Icons.group,
-        amount: "₹0",
+        amount: "₹710",
         subtext: "Per consultation",
       ),
     ];
@@ -223,6 +178,7 @@ class _EarningsComponentState extends State<EarningsComponent> {
       );
     }
 
+    // Desktop: Row
     return Row(
       children: [
         for (var i = 0; i < cards.length; i++) ...[

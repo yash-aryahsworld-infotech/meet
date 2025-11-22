@@ -49,7 +49,7 @@ class _PatientsComponentState extends State<PatientsComponent> {
           // Search Bar
           // -------------------------------------------------------------
           Container(
-            height: 45,
+            height: 35,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white,

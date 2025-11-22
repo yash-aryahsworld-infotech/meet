@@ -26,7 +26,7 @@ class TabToggle extends StatefulWidget {
 class _TabToggleState extends State<TabToggle> {
   final List<double> _itemWidths = [];
 
-  // NEW: Scroll and overflow handling
+  // Scroll and overflow handling
   final ScrollController _scrollController = ScrollController();
   bool _isOverflowing = false;
 
@@ -36,15 +36,28 @@ class _TabToggleState extends State<TabToggle> {
     _scrollController.addListener(_checkOverflow);
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _checkOverflow() {
     if (!_scrollController.hasClients) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
-    final isOverflow = maxScroll > 0;
+    // Simple check: if maxScroll > 5, we have overflow content
+    final isOverflow = maxScroll > 5;
 
-    if (_isOverflowing != isOverflow) {
+    // Logic: Hide arrow if we are AT the end
+    final atEnd = _scrollController.offset >= maxScroll - 5;
+
+    // Show arrow if we have overflow AND we are not at the very end
+    final shouldShowArrow = isOverflow && !atEnd;
+
+    if (_isOverflowing != shouldShowArrow) {
       setState(() {
-        _isOverflowing = isOverflow;
+        _isOverflowing = shouldShowArrow;
       });
     }
   }
@@ -63,11 +76,11 @@ class _TabToggleState extends State<TabToggle> {
     double adjustedFontSize;
 
     if (responsive.isDesktop) {
-      adjustedFontSize = widget.fontSize + 2; // bigger text for web
+      adjustedFontSize = widget.fontSize + 2;
     } else if (responsive.isTablet) {
-      adjustedFontSize = widget.fontSize + 1; // medium for tablet
+      adjustedFontSize = widget.fontSize + 1;
     } else {
-      adjustedFontSize = widget.fontSize; // default for mobile
+      adjustedFontSize = widget.fontSize;
     }
 
     return LayoutBuilder(
@@ -83,7 +96,7 @@ class _TabToggleState extends State<TabToggle> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: SingleChildScrollView(
-                controller: _scrollController, // NEW
+                controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Stack(
@@ -120,9 +133,8 @@ class _TabToggleState extends State<TabToggle> {
                     // ---------------- FOREGROUND TABS ----------------
                     Row(
                       children: List.generate(widget.options.length, (index) {
-                        final int? count =
-                            widget.counts != null &&
-                                widget.counts!.length > index
+                        final int? count = widget.counts != null &&
+                            widget.counts!.length > index
                             ? widget.counts![index]
                             : null;
 
@@ -130,13 +142,20 @@ class _TabToggleState extends State<TabToggle> {
                           padding: const EdgeInsets.only(right: 8),
                           child: MeasureSize(
                             onChange: (size) {
-                              if (_itemWidths.length < widget.options.length) {
+                              // Add width safely
+                              if (_itemWidths.length <= index) {
                                 _itemWidths.add(size.width);
                               } else {
                                 _itemWidths[index] = size.width;
                               }
-                              _checkOverflow();
-                              setState(() {});
+
+                              // Trigger a check after layout
+                              if (index == widget.options.length - 1) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _checkOverflow();
+                                  setState(() {});
+                                });
+                              }
                             },
                             child: GestureDetector(
                               onTap: () => widget.onSelected(index),
@@ -169,9 +188,8 @@ class _TabToggleState extends State<TabToggle> {
                                           color: widget.selectedIndex == index
                                               ? Colors.blue
                                               : Colors.grey.shade600,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
+                                          borderRadius:
+                                          BorderRadius.circular(12),
                                         ),
                                         child: Text(
                                           count.toString(),
@@ -196,25 +214,56 @@ class _TabToggleState extends State<TabToggle> {
               ),
             ),
 
-            // ---------------- RIGHT ARROW BUTTON ----------------
+            // ---------------- RIGHT ARROW BUTTON (NEW DESIGN) ----------------
             if (_isOverflowing)
               Positioned(
-                right: 4,
+                right: 0,
+                top: 0,
+                bottom: 0,
                 child: Container(
+                  padding: const EdgeInsets.only(left: 24, right: 6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.08),
-                    shape: BoxShape.circle,
+                    borderRadius: const BorderRadius.horizontal(
+                        right: Radius.circular(14)),
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Colors.grey.shade200.withOpacity(0.0),
+                        Colors.grey.shade200,
+                      ],
+                    ),
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onPressed: () {
-                      _scrollController.animateTo(
-                        _scrollController.offset + 120,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOut,
-                      );
-                    },
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        _scrollController.animateTo(
+                          _scrollController.offset + 120,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutQuad,
+                        );
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.chevron_right,
+                          size: 20,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -240,6 +289,7 @@ class _MeasureSizeState extends State<MeasureSize> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final size = context.size!;
       widget.onChange(size);
     });
