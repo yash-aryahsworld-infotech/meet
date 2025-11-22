@@ -190,6 +190,60 @@ class PerfectSidebar extends StatelessWidget {
               ),
             ),
 
+        if (userRole == "Admin")
+      Padding(
+        // Adds 16px space to the TOP and BOTTOM of this section
+        padding: const EdgeInsets.symmetric(horizontal: 16), 
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Account Role",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            
+            // Space between Label and Dropdown
+            const SizedBox(height: 8), 
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 50,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: "Admin",
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                  ),
+                  items: [
+                    "Admin",
+                    "Healthcare Provider",
+                    "Patient",
+                    "Corporate",
+                  ].map((role) {
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Text(role),
+                    );
+                  }).toList(),
+                  onChanged: (newRole) {
+                    print("Role changed to: $newRole");
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+            
             // --------------------------------------------------------
             // PROFILE SECTION (DYNAMIC)
             // --------------------------------------------------------
@@ -238,9 +292,17 @@ class PerfectSidebar extends StatelessWidget {
                         ),
                       ],
                     ),
+
+
                   ],
+
+
+
                 ),
               ),
+
+              
+              
 
             // --------------------------------------------------------
             // LOGOUT BUTTON
