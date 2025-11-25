@@ -10,8 +10,6 @@ class OverviewSection extends StatelessWidget {
   Widget build(BuildContext context) {
     // Responsive columns for Quick Actions
 
-
- 
     // Quick action list data
     final List<Map<String, dynamic>> quickActions = [
       {
@@ -107,34 +105,32 @@ class OverviewSection extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               GridView.builder(
-  shrinkWrap: true,
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: quickActions.length,
-  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: AppResponsive.isMobile(context)
-        ? 2    // Mobile → 2 cards per row
-        : AppResponsive.isTablet(context)
-            ? 3 // Tablet → 3 cards per row
-            : 4, // Desktop → 4 cards per row
-    mainAxisSpacing: 18,
-    crossAxisSpacing: 18,
-    childAspectRatio: AppResponsive.isMobile(context) ? 1.9 : 2.4,
-  ),
-  itemBuilder: (context, index) {
-    final item = quickActions[index];
-    return QuickActionCard(
-      title: item["title"],
-      icon: item["icon"],
-      bgColor: item["bg"],
-      textColor: item["text"],
-      onTap: () {
-        debugPrint("Tapped ${item['title']}");
-      },
-    );
-  },
-),
-
-
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: quickActions.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: AppResponsive.isMobile(context)
+                      ? 2 // Mobile → 2 cards per row
+                      : AppResponsive.isTablet(context)
+                      ? 3 // Tablet → 3 cards per row
+                      : 4, // Desktop → 4 cards per row
+                  mainAxisSpacing: 18,
+                  crossAxisSpacing: 18,
+                  childAspectRatio: AppResponsive.isMobile(context) ? 1.9 : 2.4,
+                ),
+                itemBuilder: (context, index) {
+                  final item = quickActions[index];
+                  return QuickActionCard(
+                    title: item["title"],
+                    icon: item["icon"],
+                    bgColor: item["bg"],
+                    textColor: item["text"],
+                    onTap: () {
+                      debugPrint("Tapped ${item['title']}");
+                    },
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -158,11 +154,9 @@ class OverviewSection extends StatelessWidget {
             ],
           ),
         ],
-          const SizedBox(height: 20),
-           const NearbyProvidersSection()
-        
+        const SizedBox(height: 20),
+        const NearbyProvidersSection(),
       ],
-      
     );
   }
 
@@ -273,15 +267,15 @@ class OverviewSection extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.description_outlined,
-                      size: 48, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.description_outlined,
+                    size: 48,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     "No recent activity",
-                    style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
@@ -304,7 +298,7 @@ class OverviewSection extends StatelessWidget {
                       "Start Health Check",
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -348,7 +342,7 @@ class OverviewSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-       
+
           Padding(
             padding: const EdgeInsets.only(left: 28.0), // Indent text to align
             child: Text(
@@ -361,7 +355,6 @@ class OverviewSection extends StatelessWidget {
             ),
           ),
         ],
-
       ),
     );
   }

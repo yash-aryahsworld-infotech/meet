@@ -15,16 +15,6 @@ import './custom_button.dart';
         //   button2OnPressed: () {},
         //   padding: AppResponsive.pagePadding(context),
         // ),
-
-
-
-
-
-
-
-
-
-
 class PageHeader extends StatelessWidget {
   final String title;
 
