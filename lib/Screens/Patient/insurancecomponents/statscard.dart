@@ -6,47 +6,39 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define your dynamic data here
+    // UPDATED DATA: Matching the 3 cards in your image
     final List<StatItem> stats = [
       const StatItem(
-        title: "Active",
+        title: "Active Policies",
         count: "0",
-        icon: Icons.medication_outlined, // Pill icon
-        themeColor: Color(0xFF00C853),   // Green
+        icon: Icons.security_outlined, // Shield icon
+        themeColor: Color(0xFF1665D8), // Blue
       ),
       const StatItem(
-        title: "Completed",
+        title: "Total Claims",
         count: "0",
-        icon: Icons.check_circle_outline_rounded,
-        themeColor: Color(0xFF2962FF),   // Blue
+        icon: Icons.description_outlined, // Document icon
+        themeColor: Color(0xFF00C853), // Green
       ),
       const StatItem(
-        title: "Expired",
+        title: "Pending Claims",
         count: "0",
-        icon: Icons.warning_amber_rounded,
-        themeColor: Color(0xFFD50000),   // Red
-      ),
-      const StatItem(
-        title: "Reminders",
-        count: "3",
-        icon: Icons.notifications_none_rounded,
-        themeColor: Color(0xFFFF6D00),   // Orange
+        icon: Icons.attach_money, // Dollar/Currency icon
+        themeColor: Color(0xFFFF6D00), // Orange
       ),
     ];
 
-    // LayoutBuilder allows us to be responsive.
-    // The image shows a single row, but on mobile, we might want 2 per row.
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate width for cards to fill available space evenly
-        // We subtract spacing (gap) from total width.
-        // On wide screens (>= 800px), we show 4 in a row.
-        // On smaller screens, we show 2 per row.
+        // RESPONSIVE LOGIC:
+        // Desktop (> 800px): Show 3 per row (to match the image)
+        // Tablet/Mobile: Show 1 per row (stacked) for better readability
+        int crossAxisCount = constraints.maxWidth > 800 ? 3 : 1;
         
-        int crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
-        if (constraints.maxWidth < 400) crossAxisCount = 1; // Very small screens
-
+        // Use a standard gap
         double gap = 16.0;
+        
+        // Calculate width dynamically
         double itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * gap)) / crossAxisCount;
 
         return Wrap(

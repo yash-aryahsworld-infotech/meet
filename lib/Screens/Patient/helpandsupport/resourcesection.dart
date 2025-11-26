@@ -3,114 +3,109 @@ import 'package:flutter/material.dart';
 class ResourcesSection extends StatelessWidget {
   const ResourcesSection({super.key});
 
+  // ------------------------------------------------------------
+  // 🔵 EASY-TO-EDIT DATA LISTS (Modify Only These Arrays)
+  // ------------------------------------------------------------
+  static const List<Map<String, String>> videoTutorials = [
+    {"title": "How to Book Your First Consultation", "duration": "3:45 mins"},
+    {"title": "Setting Up Your Health Profile", "duration": "2:20 mins"},
+    {"title": "Using the Digital Wallet", "duration": "4:10 mins"},
+  ];
+
+  static const List<Map<String, String>> userGuides = [
+    {"title": "Patient User Guide", "desc": "Complete guide for patients"},
+    {"title": "Privacy & Security Guide", "desc": "Understanding your data protection"},
+    {"title": "Payment Methods Guide", "desc": "All about payments and billing"},
+  ];
+
+  static const List<Map<String, String>> supportHours = [
+    {"label": "Emergency Support:", "value": "24/7 available"},
+    {"label": "General Support:", "value": "Mon–Sun, 9 AM – 9 PM IST"},
+    {"label": "Technical Support:", "value": "Mon–Fri, 9 AM – 6 PM IST"},
+    {"label": "Billing Support:", "value": "Mon–Fri, 10 AM – 6 PM IST"},
+  ];
+
+  // ------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Switch to stacked layout if screen is narrower than 900px
         final bool isWide = constraints.maxWidth > 900;
 
         return Column(
           children: [
-            // ------------------------------------------------
-            // TOP SECTION: VIDEOS & GUIDES
-            // ------------------------------------------------
             if (isWide)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildVideoTutorialsCard()),
+                  Expanded(child: _videoCard()),
                   const SizedBox(width: 24),
-                  Expanded(child: _buildUserGuidesCard()),
+                  Expanded(child: _guidesCard()),
                 ],
               )
             else
               Column(
                 children: [
-                  _buildVideoTutorialsCard(),
+                  _videoCard(),
                   const SizedBox(height: 24),
-                  _buildUserGuidesCard(),
+                  _guidesCard(),
                 ],
               ),
 
             const SizedBox(height: 24),
-
-            // ------------------------------------------------
-            // BOTTOM SECTION: SUPPORT HOURS
-            // ------------------------------------------------
-            _buildSupportHoursCard(),
+            _supportHoursCard(),
           ],
         );
       },
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 1. VIDEO TUTORIALS CARD
-  // ---------------------------------------------------------------------------
-  Widget _buildVideoTutorialsCard() {
-    final tutorials = [
-      {"title": "How to Book Your First Consultation", "duration": "3:45 mins"},
-      {"title": "Setting Up Your Health Profile", "duration": "2:20 mins"},
-      {"title": "Using the Digital Wallet", "duration": "4:10 mins"},
-    ];
-
-    return _buildBaseCard(
+  // ------------------------------------------------------------
+  // 🔵 VIDEO TUTORIALS CARD
+  // ------------------------------------------------------------
+  Widget _videoCard() {
+    return _baseCard(
       title: "Video Tutorials",
       icon: Icons.videocam_outlined,
-      children: tutorials.map((item) {
-        return _buildListItem(
-          title: item['title']!,
-          subtitle: item['duration']!,
+      children: videoTutorials.map((e) {
+        return _listItem(
+          title: e["title"]!,
+          subtitle: e["duration"]!,
           isDuration: true,
         );
       }).toList(),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 2. USER GUIDES CARD
-  // ---------------------------------------------------------------------------
-  Widget _buildUserGuidesCard() {
-    final guides = [
-      {
-        "title": "Patient User Guide",
-        "desc": "Complete guide for patients"
-      },
-      {
-        "title": "Privacy & Security Guide",
-        "desc": "Understanding your data protection"
-      },
-      {
-        "title": "Payment Methods Guide",
-        "desc": "All about payments and billing"
-      },
-    ];
-
-    return _buildBaseCard(
+  // ------------------------------------------------------------
+  // 🔵 USER GUIDES CARD
+  // ------------------------------------------------------------
+  Widget _guidesCard() {
+    return _baseCard(
       title: "User Guides",
       icon: Icons.description_outlined,
-      children: guides.map((item) {
-        return _buildListItem(
-          title: item['title']!,
-          subtitle: item['desc']!,
+      children: userGuides.map((e) {
+        return _listItem(
+          title: e["title"]!,
+          subtitle: e["desc"]!,
           isDuration: false,
         );
       }).toList(),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 3. SUPPORT HOURS CARD
-  // ---------------------------------------------------------------------------
-  Widget _buildSupportHoursCard() {
+  // ------------------------------------------------------------
+  // 🔵 SUPPORT HOURS CARD
+  // ------------------------------------------------------------
+  Widget _supportHoursCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF), // Light Blue (Colors.blue.shade50 approx)
+        color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDBEAFE)), // Light blue border
+        border: Border.all(color: const Color(0xFFDBEAFE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,14 +121,31 @@ class ResourcesSection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E40AF), // Darker Blue text
+                    color: Color(0xFF1E40AF),
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildScheduleRow("Emergency Support:", "24/7 available"),
-                _buildScheduleRow("General Support:", "Monday - Sunday, 9 AM - 9 PM IST"),
-                _buildScheduleRow("Technical Support:", "Monday - Friday, 9 AM - 6 PM IST"),
-                _buildScheduleRow("Billing Support:", "Monday - Friday, 10 AM - 6 PM IST"),
+                ...supportHours.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                          height: 1.5,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "${item['label']} ",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: item['value']),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -142,11 +154,10 @@ class ResourcesSection extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // HELPER WIDGETS
-  // ---------------------------------------------------------------------------
-
-  Widget _buildBaseCard({
+  // ------------------------------------------------------------
+  // 🔵 BASE CARD LAYOUT
+  // ------------------------------------------------------------
+  Widget _baseCard({
     required String title,
     required IconData icon,
     required List<Widget> children,
@@ -176,16 +187,19 @@ class ResourcesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          ...children.map((child) => Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: child,
+          ...children.map((c) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: c,
               )),
         ],
       ),
     );
   }
 
-  Widget _buildListItem({
+  // ------------------------------------------------------------
+  // 🔵 SINGLE LIST ITEM
+  // ------------------------------------------------------------
+  Widget _listItem({
     required String title,
     required String subtitle,
     required bool isDuration,
@@ -218,24 +232,6 @@ class ResourcesSection extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B), height: 1.5),
-          children: [
-            TextSpan(
-              text: "$label ",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(text: value),
-          ],
-        ),
       ),
     );
   }

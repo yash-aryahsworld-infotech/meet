@@ -69,17 +69,15 @@ class _HelpAndSupportState extends State<HelpAndSupport> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF7F9FC), // Global background color
+    return Material(// Global background color
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. HEADER COMPONENT
             const HelpHeader(), // Using dummy widget below
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // 2. TAB NAVIGATION
             SupportTabsToggle(
@@ -92,7 +90,7 @@ class _HelpAndSupportState extends State<HelpAndSupport> {
               },
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // 3. DYNAMIC CONTENT
             IndexedStack(
