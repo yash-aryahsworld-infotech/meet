@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:healthcare_plus/utils/app_responsive.dart';
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -37,6 +37,11 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive font size for mobile
+    final bool isMobile = AppResponsive.isMobile(context);
+    final fontSize = isMobile ? 14.0 : 16.0;
+    final iconSize = isMobile ? 18.0 : 20.0;
+
     return Shortcuts(
       shortcuts: {
         LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
@@ -55,7 +60,7 @@ class CustomButton extends StatelessWidget {
 
         child: SizedBox(
           width: width ?? double.infinity, // ⭐ DEFAULT same as before
-          height: height,                  // ⭐ DEFAULT = 50
+          height: height ,                  // ⭐ DEFAULT = 50
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -95,13 +100,13 @@ class CustomButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, color: textColor, size: 20),
+                    Icon(icon, color: textColor, size: iconSize),
                     const SizedBox(width: 8),
                   ],
                   Text(
                     text,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w500,
                       color: textColor,
                     ),

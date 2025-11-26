@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:healthcare_plus/utils/app_responsive.dart';
 class QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -18,10 +18,9 @@ class QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width;
 
-    final bool isMobile = width < 600;
-    final bool isTablet = width >= 600 && width < 1024;
+    final bool isMobile = AppResponsive.isMobile(context);
+    final bool isTablet = AppResponsive.isTablet(context);
 
     return InkWell(
       onTap: onTap,
@@ -30,7 +29,7 @@ class QuickActionCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.symmetric(
           vertical: isMobile ? 10 : 14,
-          horizontal: 12,
+          horizontal: 4,
         ),
         decoration: BoxDecoration(
           color: bgColor,

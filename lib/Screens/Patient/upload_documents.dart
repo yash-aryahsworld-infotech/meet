@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
 
 class UploadDocuments extends StatefulWidget {
   const UploadDocuments({super.key});
@@ -22,29 +23,21 @@ class _UploadDocumentsState extends State<UploadDocuments> {
   Widget build(BuildContext context) {
     // REPLACEMENT: Using Material instead of Scaffold
     return Material(
-      color: const Color(0xFFF9FAFB),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          // Fix for Infinite Size: Explicitly constrain the width
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200), 
-              child: Padding(
-                padding: const EdgeInsets.all(24.0), // Simple padding
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(context),
-                    const SizedBox(height: 24),
-                    _buildUploadForm(context),
-                    const SizedBox(height: 24),
-                    _buildDocumentList(context),
-                    const SizedBox(height: 24),
-                    _buildSecuritySection(context),
-                  ],
-                ),
-              ),
-            ),
+      child: SingleChildScrollView(
+        // Fix for Infinite Size: Explicitly constrain the width
+        child: Center(
+          // Simple padding
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              const SizedBox(height: 24),
+              _buildUploadForm(context),
+              const SizedBox(height: 24),
+              _buildDocumentList(context),
+              const SizedBox(height: 24),
+              _buildSecuritySection(context),
+            ],
           ),
         ),
       ),
@@ -83,7 +76,7 @@ class _UploadDocumentsState extends State<UploadDocuments> {
 
   // --- REUSABLE SHELLS ---
 
-  Widget _CardShell({required Widget child}) {
+  Widget _cardshell({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -91,18 +84,29 @@ class _UploadDocumentsState extends State<UploadDocuments> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _kBorder),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: child,
     );
   }
 
-  Widget _InputShell({required String label, required Widget child}) {
+  Widget _inputShell({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500, color: _kTextDark, fontSize: 14)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            color: _kTextDark,
+            fontSize: 14,
+          ),
+        ),
         const SizedBox(height: 6),
         child,
       ],
@@ -112,36 +116,53 @@ class _UploadDocumentsState extends State<UploadDocuments> {
   // --- FORM SECTION ---
 
   Widget _buildUploadForm(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 800;
-    
+    bool isMobile = AppResponsive.isMobile(context);
+
     final catDropdown = _buildDropdown();
     final datePicker = _buildDatePicker(context);
 
-    return _CardShell(
+    return _cardshell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isMobile) ...[
-            _InputShell(label: "Document Category *", child: catDropdown),
+            _inputShell(label: "Document Category *", child: catDropdown),
             const SizedBox(height: 16),
-            _InputShell(label: "Test/Document Date", child: datePicker),
+            _inputShell(label: "Test/Document Date", child: datePicker),
           ] else
             Row(
               children: [
-                Expanded(child: _InputShell(label: "Document Category *", child: catDropdown)),
+                Expanded(
+                  child: _inputShell(
+                    label: "Document Category *",
+                    child: catDropdown,
+                  ),
+                ),
                 const SizedBox(width: 24),
-                Expanded(child: _InputShell(label: "Test/Document Date", child: datePicker)),
+                Expanded(
+                  child: _inputShell(
+                    label: "Test/Document Date",
+                    child: datePicker,
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 16),
-          _InputShell(
+          _inputShell(
             label: "Doctor/Provider Name",
-            child: _buildTextField(_providerController, "e.g., Dr. Smith, ABC Hospital"),
+            child: _buildTextField(
+              _providerController,
+              "e.g., Dr. Smith, ABC Hospital",
+            ),
           ),
           const SizedBox(height: 16),
-          _InputShell(
+          _inputShell(
             label: "Description (Optional)",
-            child: _buildTextField(_descriptionController, "Brief description...", maxLines: 3),
+            child: _buildTextField(
+              _descriptionController,
+              "Brief description...",
+              maxLines: 3,
+            ),
           ),
           const SizedBox(height: 24),
           _buildDropZone(context),
@@ -159,13 +180,26 @@ class _UploadDocumentsState extends State<UploadDocuments> {
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBorder)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kBorder)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _kPrimary)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _kBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _kBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: _kPrimary),
+      ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -180,7 +214,12 @@ class _UploadDocumentsState extends State<UploadDocuments> {
       decoration: _inputDeco("Select category"),
       icon: const Icon(Icons.keyboard_arrow_down),
       items: ["Lab Report", "Prescription", "Scan", "Invoice"]
-          .map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(fontSize: 14))))
+          .map(
+            (v) => DropdownMenuItem(
+              value: v,
+              child: Text(v, style: const TextStyle(fontSize: 14)),
+            ),
+          )
           .toList(),
       onChanged: (v) => setState(() => _selectedCategory = v),
     );
@@ -221,9 +260,19 @@ class _UploadDocumentsState extends State<UploadDocuments> {
         children: [
           Icon(Icons.upload_file_outlined, size: 40, color: Colors.grey[400]),
           const SizedBox(height: 12),
-          const Text("Upload Medical Documents", style: TextStyle(fontWeight: FontWeight.bold, color: _kTextDark, fontSize: 16)),
+          const Text(
+            "Upload Medical Documents",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _kTextDark,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text("Drag & drop or click to browse", style: TextStyle(color: _kTextGrey, fontSize: 14)),
+          const Text(
+            "Drag & drop or click to browse",
+            style: TextStyle(color: _kTextGrey, fontSize: 14),
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {},
@@ -231,7 +280,9 @@ class _UploadDocumentsState extends State<UploadDocuments> {
               backgroundColor: _kPrimary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text("Select Files"),
           ),
@@ -242,35 +293,53 @@ class _UploadDocumentsState extends State<UploadDocuments> {
 
   Widget _buildFooterNotes() {
     Widget note(IconData i, String t, {Color? c}) => Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(children: [
-            Icon(i, size: 14, color: c ?? Colors.grey[400]),
-            const SizedBox(width: 8),
-            Text(t, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-          ]),
-        );
-    return Column(children: [
-      note(Icons.folder_outlined, "Supported: PDF, DOC, JPG, PNG"),
-      note(Icons.attach_file, "Max size: 10 MB"),
-      note(Icons.lock_outline, "Encrypted & HIPAA compliant", c: Colors.orange),
-    ]);
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(i, size: 14, color: c ?? Colors.grey[400]),
+          const SizedBox(width: 8),
+          Text(t, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+        ],
+      ),
+    );
+    return Column(
+      children: [
+        note(Icons.folder_outlined, "Supported: PDF, DOC, JPG, PNG"),
+        note(Icons.attach_file, "Max size: 10 MB"),
+        note(
+          Icons.lock_outline,
+          "Encrypted & HIPAA compliant",
+          c: Colors.orange,
+        ),
+      ],
+    );
   }
 
   // --- LIST SECTION ---
 
   Widget _buildDocumentList(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 600;
-    return _CardShell(
+    return _cardshell(
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Your Documents (1)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _kTextDark)),
+              const Text(
+                "Your Documents (1)",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: _kTextDark,
+                ),
+              ),
               if (!isMobile) _buildBadge(),
             ],
           ),
-          if (isMobile) ...[const SizedBox(height: 8), Align(alignment: Alignment.centerLeft, child: _buildBadge())],
+          if (isMobile) ...[
+            const SizedBox(height: 8),
+            Align(alignment: Alignment.centerLeft, child: _buildBadge()),
+          ],
           const SizedBox(height: 16),
           _buildListItem(context),
         ],
@@ -281,19 +350,28 @@ class _UploadDocumentsState extends State<UploadDocuments> {
   Widget _buildBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey[300]!)),
-      child: const Row(children: [
-        Icon(Icons.lock_outline, size: 14, color: _kTextGrey),
-        SizedBox(width: 4),
-        Text("Encrypted", style: TextStyle(fontSize: 12, color: _kTextGrey)),
-      ]),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.lock_outline, size: 14, color: _kTextGrey),
+          SizedBox(width: 4),
+          Text("Encrypted", style: TextStyle(fontSize: 12, color: _kTextGrey)),
+        ],
+      ),
     );
   }
 
   Widget _buildListItem(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: _kBorder)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _kBorder),
+      ),
       child: Column(
         children: [
           Row(
@@ -301,7 +379,10 @@ class _UploadDocumentsState extends State<UploadDocuments> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: Colors.green.withAlpha(25),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: const Icon(Icons.science_outlined, color: Colors.green),
               ),
               const SizedBox(width: 16),
@@ -309,16 +390,42 @@ class _UploadDocumentsState extends State<UploadDocuments> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, children: [
-                      const Text("blood_test_results.pdf", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                        child: const Text("completed", style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500)),
-                      )
-                    ]),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        const Text(
+                          "blood_test_results.pdf",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withAlpha(  25),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "completed",
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 4),
-                    const Text("Lab Report • 2.34 MB • 22/11/2025", style: TextStyle(color: _kTextGrey, fontSize: 12)),
+                    const Text(
+                      "Lab Report • 2.34 MB • 22/11/2025",
+                      style: TextStyle(color: _kTextGrey, fontSize: 12),
+                    ),
                   ],
                 ),
               ),
@@ -327,11 +434,20 @@ class _UploadDocumentsState extends State<UploadDocuments> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(onPressed: () {}, icon: const Icon(Icons.visibility_outlined, color: _kTextGrey)),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.download_outlined, color: _kTextGrey)),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.delete_outline, color: Colors.redAccent)),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.visibility_outlined, color: _kTextGrey),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.download_outlined, color: _kTextGrey),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -345,29 +461,55 @@ class _UploadDocumentsState extends State<UploadDocuments> {
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.2)),
+        border: Border.all(color: Colors.blue.withAlpha(51)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
-            Icon(Icons.security, color: _kPrimary, size: 20),
-            SizedBox(width: 8),
-            Text("Security & Privacy", style: TextStyle(color: _kPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
-          ]),
+          const Row(
+            children: [
+              Icon(Icons.security, color: _kPrimary, size: 20),
+              SizedBox(width: 8),
+              Text(
+                "Security & Privacy",
+                style: TextStyle(
+                  color: _kPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           ...[
             "All documents are encrypted with AES-256 encryption",
             "Only you and authorized healthcare providers can access your documents",
             "Documents are stored in HIPAA-compliant secure cloud storage",
-          ].map((text) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Padding(padding: EdgeInsets.only(top: 6), child: Icon(Icons.circle, size: 4, color: _kPrimary)),
+          ].map(
+            (text) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Icon(Icons.circle, size: 4, color: _kPrimary),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(text, style: const TextStyle(color: _kPrimary, fontSize: 12, height: 1.4))),
-                ]),
-              )),
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        color: _kPrimary,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -25,6 +25,8 @@ class _HealthRecordState extends State<HealthRecord> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedType = 'All Types';
 
+
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -46,14 +48,11 @@ class _HealthRecordState extends State<HealthRecord> {
   @override
   Widget build(BuildContext context) {
     // center and constrain to a comfortable width similar to screenshot
-    const double pageMaxWidth = 1200;
-
+  final bool isMobile = AppResponsive.isMobile(context);
     return Material(
       child: SingleChildScrollView(
         padding: AppResponsive.pagePadding(context),
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: pageMaxWidth),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -62,19 +61,17 @@ class _HealthRecordState extends State<HealthRecord> {
                   title: 'Health Records',
                   subtitle: 'Manage and view your medical records',
                   button1Icon: Icons.add,
-                  button1Text: 'Add Record',
+                  button1Text:  isMobile ? 'Record' : 'Add Record' ,
                   button1OnPressed: _onAddRecord,
                   button2Icon: Icons.download_outlined,
-                  button2Text: 'Export All',
+                  button2Text: isMobile ? 'Export' : 'Export All',
                   button2OnPressed: _onExportAll,
-                  padding: const EdgeInsets.only(bottom: 20),
                 ),
 
                 // SEARCH + TYPE DROPDOWN (responsive)
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final bool narrow = constraints.maxWidth < 720;
-                    if (narrow) {
+                    if (isMobile) {
                       // stacked on narrow screens
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +183,6 @@ class _HealthRecordState extends State<HealthRecord> {
             ),
           ),
         ),
-      ),
     );
   }
 

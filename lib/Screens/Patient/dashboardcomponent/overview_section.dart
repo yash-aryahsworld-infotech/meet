@@ -9,7 +9,7 @@ class OverviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Responsive columns for Quick Actions
-
+     final bool isMobile = AppResponsive.isMobile(context);
     // Quick action list data
     final List<Map<String, dynamic>> quickActions = [
       {
@@ -80,7 +80,7 @@ class OverviewSection extends StatelessWidget {
         // 1. EXISTING QUICK ACTIONS CARD
         // ------------------------------------------
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isMobile ? 8 : 24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -91,13 +91,13 @@ class OverviewSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.local_hospital_outlined, size: 22),
+                  const Icon(Icons.local_hospital_outlined, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     "Quick Actions",
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                      fontSize: isMobile ? 16: 20,
+                      fontWeight: isMobile ? FontWeight.w500 : FontWeight.w700,
                       color: Colors.grey.shade900,
                     ),
                   ),
