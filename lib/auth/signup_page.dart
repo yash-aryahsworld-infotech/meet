@@ -5,7 +5,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:healthcare_plus/widgets/custom_tab.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
-import '../widgets/custom_toggle_switch.dart';
 
 class SignUpForm extends StatefulWidget {
   final VoidCallback onSwitchToSignIn;
