@@ -19,9 +19,7 @@ class _InsuranceState extends State<Insurance> {
     final bool isMobile = AppResponsive.isMobile(context);
 
     return Material(
-      color: const Color(0xFFF5F6FA), // Background color
       child: SingleChildScrollView(
-        padding: AppResponsive.pagePadding(context),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),

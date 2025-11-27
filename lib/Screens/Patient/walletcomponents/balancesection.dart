@@ -6,13 +6,7 @@ class BalanceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE9F2FD),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: LayoutBuilder(
+    return LayoutBuilder(
         builder: (context, constraints) {
           bool isMobile = constraints.maxWidth < 800;
 
@@ -107,7 +101,6 @@ class BalanceSection extends StatelessWidget {
                   ],
                 );
         },
-      ),
-    );
+      );
   }
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class StatItem {
   final String title;
   final String count;
@@ -26,13 +24,27 @@ class QuickStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 480;
+
+    // Responsive sizes
+    final double iconSize = isMobile ? 20 : 28;
+    final double titleSize = isMobile ? 12 : 14;
+    final double countSize = isMobile ? 18 : 24;
+    final double horizontalPadding = isMobile ? 12 : 16;
+    final double verticalPadding = isMobile ? 14 : 20;
+    final double spacing = isMobile ? 10 : 16;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0), // Rounded corners like image
+        borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: Colors.grey.shade300, // Subtle border
+          color: Colors.grey.shade300,
           width: 1.0,
         ),
         boxShadow: [
@@ -44,40 +56,34 @@ class QuickStatCard extends StatelessWidget {
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align icon with top of text
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon Section
-          Container(
-            padding: const EdgeInsets.only(top: 2), // Slight visual adjustment
-            child: Icon(
-              item.icon,
-              size: 28,
-              color: item.themeColor,
-            ),
+          Icon(
+            item.icon,
+            size: iconSize,
+            color: item.themeColor,
           ),
-          
-          const SizedBox(width: 16),
-          
-          // Text Section
+
+          SizedBox(width: spacing),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   item.title,
                   style: TextStyle(
-                    color: Colors.blueGrey[400], // Muted text color for label
-                    fontSize: 14.0,
+                    color: Colors.blueGrey[400],
+                    fontSize: titleSize,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   item.count,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.black87,
-                    fontSize: 24.0, // Large number
+                    fontSize: countSize,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

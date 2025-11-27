@@ -8,8 +8,6 @@ class PaymentLinksComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaxWidthContainer(
-      child: Padding(
-        padding: AppResponsive.pagePadding(context),
         child: Column(
           children: [
             PaymentSummaryCard(
@@ -36,7 +34,6 @@ class PaymentLinksComponent extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

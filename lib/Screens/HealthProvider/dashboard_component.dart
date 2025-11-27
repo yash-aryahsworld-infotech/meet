@@ -19,8 +19,6 @@ class HealthProviderDashboard extends StatelessWidget {
     final bool isDesktop = AppResponsive.isDesktop(context);
 
     return MaxWidthContainer(
-      child: Padding(
-        padding: AppResponsive.pagePadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -95,7 +93,6 @@ class HealthProviderDashboard extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
+      );
   }
 }

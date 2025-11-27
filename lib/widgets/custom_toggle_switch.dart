@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import '../utils/responsive.dart'; // ✅ Import your Responsive class
+import 'package:flutter/material.dart'; 
 
 class CustomToggleSwitch extends StatelessWidget {
   final List<String> options;
@@ -19,26 +18,26 @@ class CustomToggleSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         double maxWidth = constraints.maxWidth; // Parent width (card or screen)
 
         // 🔹 Define widths per device type
-        double width;
-        if (responsive.isMobile) {
-          width = responsive.width * 0.85; // ~85% width
-        } else if (responsive.isTablet) {
-          width = responsive.width * 0.5; // ✅ Half width on tablet
-        } else {
-          width = responsive.width * 0.4; // ✅ Half (or less) for web/desktop
-        }
 
+    double width = maxWidth * 0.85;
+
+    // if (isMobile) {
+    //   width = maxWidth * 0.85; // 85% width for mobile
+    // } else if (isTablet) {
+    //   width = maxWidth * 0.85; // 50% width for tablet
+    // } else {
+    //   width = maxWidth * 0.85; // 40% width for desktop/web
+    // }
         // Prevent width exceeding parent (important for cards)
         if (width > maxWidth) width = maxWidth * 0.9;
 
-        final double adjustedFontSize = responsive.scale(fontSize);
+        final double adjustedFontSize = (fontSize);
         final double segmentWidth = width / options.length;
 
         return Center(
@@ -69,7 +68,7 @@ class CustomToggleSwitch extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.grey.withAlpha(77),
                           blurRadius: 6,
                           spreadRadius: 1,
                           offset: const Offset(0, 2),

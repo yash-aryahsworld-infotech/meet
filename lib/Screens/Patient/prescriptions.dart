@@ -31,7 +31,6 @@ class _PrescriptionsState extends State<Prescriptions> {
 
     return Material(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: maxWidth),

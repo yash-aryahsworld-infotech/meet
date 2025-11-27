@@ -17,17 +17,18 @@ class HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMobile = AppResponsive.isMobile(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade700,
+    return Card(
+      elevation: 3,
+      color: Colors.blue.shade700,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppResponsive.radiusLG),
       ),
-
-      child: isMobile
-          ? _buildMobileLayout(context)
-          : _buildDesktopLayout(context),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: isMobile
+            ? _buildMobileLayout(context)
+            : _buildDesktopLayout(context),
+      ),
     );
   }
 
@@ -36,7 +37,6 @@ class HeaderSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// Username on new line in mobile
         Text(
           "Welcome back,\n$doctorName!",
           style: TextStyle(
@@ -55,7 +55,6 @@ class HeaderSection extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // Status at the bottom
         Row(
           children: [
             const Text("Online Status",
@@ -106,7 +105,8 @@ class HeaderSection extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Text("Online Status", style: TextStyle(color: Colors.white70)),
+            const Text("Online Status",
+                style: TextStyle(color: Colors.white70)),
             Row(
               children: [
                 Icon(Icons.circle,

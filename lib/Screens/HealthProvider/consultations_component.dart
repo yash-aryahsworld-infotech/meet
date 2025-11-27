@@ -3,8 +3,7 @@ import '../../widgets/custom_tab.dart'; // TabToggle
 import 'consultationscomponents/active_consultations_tab.dart';
 import 'consultationscomponents/completed_consultations_tab.dart';
 import 'consultationscomponents/all_consultations_tab.dart';
-import '../../utils/app_responsive.dart';
-import '../../widgets/custom_header.dart';   // ⭐ IMPORT PAGE HEADER
+import '../../widgets/custom_header.dart';
 
 class ConsultationsComponent extends StatefulWidget {
   const ConsultationsComponent({super.key});
@@ -22,16 +21,11 @@ class _ConsultationsComponentState extends State<ConsultationsComponent> {
     "All Consultations",
   ];
 
-  final List<int> tabCounts = [
-    0,
-    0,
-    0,
-  ];
+  final List<int> tabCounts = [0, 0, 0];
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: AppResponsive.pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,31 +36,38 @@ class _ConsultationsComponentState extends State<ConsultationsComponent> {
             title: "Consultation Management",
             subtitle: "Manage patient consultations and medical notes",
           ),
+          
 
           // -------------------------------------------------------------
-          // Search Bar
+          // Search Bar (Corrected)
           // -------------------------------------------------------------
-          Container(
-            height: 45,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: Colors.grey),
-                SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Search consultations...",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                )
-              ],
+          TextField(
+            decoration: InputDecoration(
+              hintText: "Search consultations...",
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              filled: true,
+              fillColor: Colors.white,
+              // contentPadding controls the height effectively
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              
+              // Default Border
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              
+              // Border when not focused
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              
+              // Border when clicked/focused
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.blue, width: 1.5), 
+              ),
             ),
           ),
 

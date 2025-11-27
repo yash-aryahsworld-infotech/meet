@@ -123,7 +123,7 @@ class ChartPainter extends CustomPainter {
   void _drawDashedLine(Canvas canvas, Paint paint, Offset p1, Offset p2) {
     double dashWidth = 5;
     double dashSpace = 5;
-    double distance = p2.dx - p1.dx; // Assuming horizontal line
+    // double distance = p2.dx - p1.dx; // Assuming horizontal line
     double startX = p1.dx;
     
     while (startX < p2.dx) {

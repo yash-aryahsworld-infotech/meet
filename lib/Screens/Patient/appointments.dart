@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare_plus/widgets/custom_header.dart';
 import 'package:healthcare_plus/widgets/custom_tab.dart';
-import '../../utils/app_responsive.dart';
 class Appointments extends StatefulWidget {
   const Appointments({super.key});
 
@@ -28,7 +27,6 @@ class _AppointmentsState extends State<Appointments> {
 
     return Material(
       child: SingleChildScrollView(
-        padding: AppResponsive.pagePadding(context),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: pageMaxWidth),
@@ -57,8 +55,6 @@ class _AppointmentsState extends State<Appointments> {
                   counts: [0, 0, 0],
                   selectedIndex: _selectedTab,
                   onSelected: (i) => setState(() => _selectedTab = i),
-                  height: 40,
-                  fontSize: 12,
                 ),
 
                 const SizedBox(height: 30),

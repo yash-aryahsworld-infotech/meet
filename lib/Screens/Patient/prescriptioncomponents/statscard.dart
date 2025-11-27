@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
 import 'package:healthcare_plus/widgets/custom_quickstats_card.dart';
 
 class StatsSection extends StatelessWidget {
@@ -35,19 +36,31 @@ class StatsSection extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxis = constraints.maxWidth > 800 ? 4 : 2;
-        if (constraints.maxWidth < 400) crossAxis = 1;
+        double width = constraints.maxWidth;
+
+        int crossAxis;
+
+
+        if (AppResponsive.isMobile(context) || AppResponsive.isTablet(context)) {
+          crossAxis = 2; // medium mobiles & tablets
+        } 
+        else {
+          crossAxis = 4; // desktop
+        }
 
         double gap = 16;
-        double itemWidth =
-            (constraints.maxWidth - (gap * (crossAxis - 1))) / crossAxis;
+        double itemWidth = (width - (gap * (crossAxis - 1))) / crossAxis;
 
         return Wrap(
           spacing: gap,
           runSpacing: gap,
           children: stats
-              .map((item) =>
-                  SizedBox(width: itemWidth, child: QuickStatCard(item: item)))
+              .map(
+                (item) => SizedBox(
+                  width: itemWidth,
+                  child: QuickStatCard(item: item),
+                ),
+              )
               .toList(),
         );
       },

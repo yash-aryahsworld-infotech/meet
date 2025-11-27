@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:healthcare_plus/utils/app_responsive.dart';
 
 import './patientscomponents/all_patients_tab.dart';
 import './patientscomponents/recent_visits_tab.dart';
@@ -33,7 +32,6 @@ class _PatientsComponentState extends State<PatientsComponent> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: AppResponsive.pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -46,29 +44,35 @@ class _PatientsComponentState extends State<PatientsComponent> {
           ),
 
           // -------------------------------------------------------------
-          // Search Bar
+          // Search Bar (Corrected)
           // -------------------------------------------------------------
-          Container(
-            height: 35,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: Colors.grey),
-                SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Search patients...",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                )
-              ],
+          TextField(
+            decoration: InputDecoration(
+              hintText: "Search patients...",
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              filled: true,
+              fillColor: Colors.white,
+              // Controls height and internal spacing
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              
+              // Default Border
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              
+              // Border when not focused
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              
+              // Border when clicked/focused
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+              ),
             ),
           ),
 

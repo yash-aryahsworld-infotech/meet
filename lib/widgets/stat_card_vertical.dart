@@ -18,12 +18,21 @@ class VerticalStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 480;
+
+    // Responsive sizes
+    final double iconSize = isMobile ? 16 : 20;
+    final double countSize = isMobile ? 18 : 22;
+    final double titleSize = isMobile ? 11 : 13;
+    final double padding = isMobile ? 10 : 12;
+
     return Container(
       width: width,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      padding: EdgeInsets.symmetric(vertical: padding, horizontal: padding),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),   // screenshot matched
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
@@ -43,7 +52,7 @@ class VerticalStatCard extends StatelessWidget {
               color: iconColor.withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 20, color: iconColor), // smaller icon
+            child: Icon(icon, size: iconSize, color: iconColor),
           ),
 
           const SizedBox(height: 8),
@@ -51,8 +60,8 @@ class VerticalStatCard extends StatelessWidget {
           // COUNT
           Text(
             "$count",
-            style: const TextStyle(
-              fontSize: 22,          // perfect small size
+            style: TextStyle(
+              fontSize: countSize,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -65,7 +74,7 @@ class VerticalStatCard extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,          // matches screenshot
+              fontSize: titleSize,
               fontWeight: FontWeight.w500,
               color: Colors.grey.shade700,
             ),

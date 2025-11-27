@@ -12,6 +12,7 @@ import 'package:healthcare_plus/Screens/Patient/appointments.dart';
 import 'package:healthcare_plus/Screens/Patient/health_record.dart';
 import 'package:healthcare_plus/Screens/Patient/help_and_support.dart';
 import 'package:healthcare_plus/Screens/Patient/insurance.dart';
+import 'package:healthcare_plus/Screens/Patient/near_by_healthcare.dart';
 import 'package:healthcare_plus/Screens/Patient/payments.dart';
 import 'package:healthcare_plus/Screens/Patient/prescriptions.dart';
 import 'package:healthcare_plus/Screens/Patient/privacy_and_consent.dart';
@@ -63,6 +64,11 @@ final List<SidebarItem> patientSidebar = [
     title: 'Book Consultation',
     route: '/bookconsultation',
     page: BookConsultation(),
+  ),  SidebarItem(
+    icon: Icons.location_on_outlined,
+    title: 'Nearby Hospitals',
+    route: '/nearby-hospitals',
+    page: NearbyHealthcare(),
   ),
   SidebarItem(
     icon: Icons.calendar_today_outlined,

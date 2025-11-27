@@ -63,8 +63,6 @@ class _EarningsComponentState extends State<EarningsComponent> {
               options: tabs,
               counts: tabCounts,
               selectedIndex: selectedTab,
-              fontSize: 15,
-              height: 48,
               onSelected: (index) {
                 setState(() => selectedTab = index);
               },

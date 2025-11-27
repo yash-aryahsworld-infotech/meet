@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import '../utils/responsive.dart';
+import '../utils/app_responsive.dart'; // Ensure this matches your file structure
 
 class TabToggle extends StatefulWidget {
   final List<String> options;
   final List<int>? counts;
   final int selectedIndex;
   final Function(int) onSelected;
-  final double height;
-  final double fontSize;
 
   const TabToggle({
     super.key,
@@ -15,8 +13,7 @@ class TabToggle extends StatefulWidget {
     required this.selectedIndex,
     required this.onSelected,
     this.counts,
-    this.height = 45,
-    this.fontSize = 14,
+    // Removed fixed height parameter to allow auto-sizing
   });
 
   @override
@@ -26,7 +23,7 @@ class TabToggle extends StatefulWidget {
 class _TabToggleState extends State<TabToggle> {
   final List<double> _itemWidths = [];
 
-  // Scroll and overflow handling
+  // Scroll handling
   final ScrollController _scrollController = ScrollController();
   bool _isOverflowing = false;
 
@@ -44,193 +41,192 @@ class _TabToggleState extends State<TabToggle> {
 
   void _checkOverflow() {
     if (!_scrollController.hasClients) return;
-
     final maxScroll = _scrollController.position.maxScrollExtent;
-    // Simple check: if maxScroll > 5, we have overflow content
     final isOverflow = maxScroll > 5;
-
-    // Logic: Hide arrow if we are AT the end
     final atEnd = _scrollController.offset >= maxScroll - 5;
-
-    // Show arrow if we have overflow AND we are not at the very end
     final shouldShowArrow = isOverflow && !atEnd;
 
     if (_isOverflowing != shouldShowArrow) {
-      setState(() {
-        _isOverflowing = shouldShowArrow;
-      });
+      setState(() => _isOverflowing = shouldShowArrow);
     }
   }
 
   double _calculateLeftOffset(int index) {
     double left = 0;
     for (int i = 0; i < index; i++) {
-      left += _itemWidths[i] + 8; // space between tabs
+      // Add item width + spacing between items
+      left += (_itemWidths.length > i ? _itemWidths[i] : 0) + 
+              (AppResponsive.spaceXS); 
     }
     return left;
   }
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
-    double adjustedFontSize;
-
-    if (responsive.isDesktop) {
-      adjustedFontSize = widget.fontSize + 2;
-    } else if (responsive.isTablet) {
-      adjustedFontSize = widget.fontSize + 1;
-    } else {
-      adjustedFontSize = widget.fontSize;
-    }
+    // 1. Responsive Styling
+    final isMobile = AppResponsive.isMobile(context);
+    final double responsiveFontSize = AppResponsive.fontSM(context);
+    const double radius = AppResponsive.radiusMD;
+    
+    // Dynamic padding based on device size
+    final double verticalPad = isMobile ? 8 : 10;
+    final double horizontalPad = isMobile ? 16 : 20;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(
           alignment: Alignment.centerRight,
           children: [
-            // MAIN CONTAINER
+            // ---------------- MAIN TRACK ----------------
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              padding: const EdgeInsets.all(4), // Padding around the pill
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(14),
+                color: const Color(0xFFF1F5F9), // Subtle Slate Grey
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: SingleChildScrollView(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                child: Stack(
-                  children: [
-                    // ---------------- SLIDING ANIMATED PILL ----------------
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeOut,
-                      left: _itemWidths.isNotEmpty
-                          ? _calculateLeftOffset(widget.selectedIndex)
-                          : 0,
-                      top: 0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 260),
-                        curve: Curves.easeOut,
-                        height: widget.height - 2,
-                        width: _itemWidths.isNotEmpty
+                child: IntrinsicHeight( // Allows children to determine height
+                  child: Stack(
+                    children: [
+                      // ---------------- ANIMATED PILL ----------------
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        left: _itemWidths.isNotEmpty
+                            ? _calculateLeftOffset(widget.selectedIndex)
+                            : 0,
+                        width: _itemWidths.isNotEmpty && _itemWidths.length > widget.selectedIndex
                             ? _itemWidths[widget.selectedIndex]
                             : 0,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(18),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                        // Top and Bottom 0 makes it fill vertical space automatically
+                        top: 0, 
+                        bottom: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(radius - 4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 1,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // ---------------- FOREGROUND TABS ----------------
-                    Row(
-                      children: List.generate(widget.options.length, (index) {
-                        final int? count = widget.counts != null &&
-                            widget.counts!.length > index
-                            ? widget.counts![index]
-                            : null;
+                      // ---------------- TAB ITEMS ----------------
+                      Row(
+                        children: List.generate(widget.options.length, (index) {
+                          final int? count = widget.counts != null &&
+                                  widget.counts!.length > index
+                              ? widget.counts![index]
+                              : null;
+                          final bool isSelected = widget.selectedIndex == index;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: MeasureSize(
-                            onChange: (size) {
-                              // Add width safely
-                              if (_itemWidths.length <= index) {
-                                _itemWidths.add(size.width);
-                              } else {
-                                _itemWidths[index] = size.width;
-                              }
-
-                              // Trigger a check after layout
-                              if (index == widget.options.length - 1) {
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  _checkOverflow();
-                                  setState(() {});
-                                });
-                              }
-                            },
-                            child: GestureDetector(
-                              onTap: () => widget.onSelected(index),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                color: Colors.transparent,
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      widget.options[index],
-                                      style: TextStyle(
-                                        fontSize: adjustedFontSize,
-                                        fontWeight: FontWeight.w600,
-                                        color: widget.selectedIndex == index
-                                            ? Colors.black
-                                            : Colors.grey.shade700,
+                          return Padding(
+                            padding: const EdgeInsets.only(right: AppResponsive.spaceXS),
+                            child: MeasureSize(
+                              onChange: (size) {
+                                if (_itemWidths.length <= index) {
+                                  _itemWidths.add(size.width);
+                                } else {
+                                  _itemWidths[index] = size.width;
+                                }
+                                if (index == widget.options.length - 1) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    _checkOverflow();
+                                    if (mounted) setState(() {});
+                                  });
+                                }
+                              },
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => widget.onSelected(index),
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: horizontalPad,
+                                    vertical: verticalPad,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        widget.options[index],
+                                        style: TextStyle(
+                                          fontSize: responsiveFontSize,
+                                          fontWeight: isSelected 
+                                              ? FontWeight.w600 
+                                              : FontWeight.w500,
+                                          color: isSelected
+                                              ? const Color(0xFF0F172A) // Dark Slate
+                                              : const Color(0xFF64748B), // Slate 500
+                                        ),
                                       ),
-                                    ),
-                                    if (count != null && count > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: widget.selectedIndex == index
-                                              ? Colors.blue
-                                              : Colors.grey.shade600,
-                                          borderRadius:
-                                          BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          count.toString(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                                      if (count != null && count > 0) ...[
+                                        const SizedBox(width: 8),
+                                        AnimatedContainer(
+                                          duration: const Duration(milliseconds: 300),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? Colors.blue.shade600
+                                                : Colors.grey.shade300,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            count.toString(),
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            // ---------------- RIGHT ARROW BUTTON (NEW DESIGN) ----------------
+            // ---------------- SCROLL INDICATOR ARROW ----------------
             if (_isOverflowing)
               Positioned(
                 right: 0,
                 top: 0,
                 bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.only(left: 24, right: 6),
+                  padding: const EdgeInsets.only(left: 16, right: 4),
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(14)),
+                        right: Radius.circular(radius)),
                     gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
                       colors: [
-                        Colors.grey.shade200.withOpacity(0.0),
-                        Colors.grey.shade200,
+                        const Color(0xFFF1F5F9).withOpacity(0.0),
+                        const Color(0xFFF1F5F9),
                       ],
                     ),
                   ),
@@ -238,28 +234,27 @@ class _TabToggleState extends State<TabToggle> {
                     child: GestureDetector(
                       onTap: () {
                         _scrollController.animateTo(
-                          _scrollController.offset + 120,
+                          _scrollController.offset + 100,
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeOutQuad,
                         );
                       },
                       child: Container(
-                        width: 32,
-                        height: 32,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              blurRadius: 4,
                             ),
                           ],
                         ),
                         child: Icon(
                           Icons.chevron_right,
-                          size: 20,
+                          size: 18,
                           color: Colors.grey.shade700,
                         ),
                       ),
@@ -274,11 +269,10 @@ class _TabToggleState extends State<TabToggle> {
   }
 }
 
-// -------- UTILITY: Measure child size for pill animation --------
+// -------- UTILITY: Measure child size --------
 class MeasureSize extends StatefulWidget {
   final Widget child;
   final void Function(Size size) onChange;
-
   const MeasureSize({super.key, required this.child, required this.onChange});
 
   @override

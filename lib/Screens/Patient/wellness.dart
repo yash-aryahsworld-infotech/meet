@@ -30,7 +30,7 @@ class _WellnessState extends State<Wellness> {
     return Material(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

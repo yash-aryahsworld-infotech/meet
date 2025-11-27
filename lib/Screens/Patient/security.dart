@@ -33,10 +33,8 @@ class _SecurityState extends State<Security> {
 
     return Material(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+        
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -216,8 +214,7 @@ class _SecurityState extends State<Security> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   // --- Helper Widgets ---

@@ -114,6 +114,7 @@ class _PrivacyAndConsentState extends State<PrivacyAndConsent>
       height: MediaQuery.of(context).size.height,
       child: Material(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         child: SafeArea(
           child: Column(
             children: [

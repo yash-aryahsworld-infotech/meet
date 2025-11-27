@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../widgets/custom_header.dart';
-import '../../utils/app_responsive.dart';
 
 // Import the new component
 import '../../widgets/custom_support_tab_toggle.dart';
@@ -33,7 +32,6 @@ class _SettingsComponentState extends State<SettingsComponent> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: AppResponsive.pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

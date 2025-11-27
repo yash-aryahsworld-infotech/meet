@@ -13,7 +13,6 @@ class Analytics extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material( // Light grey background
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             // 1. HEALTH SCORE COMPONENT
@@ -46,7 +45,10 @@ class Analytics extends StatelessWidget {
                 HealthMetricData(month: "Dec", bp: 117, heartRate: 69, weight: 68.8),
               ],
             ),
-              const HealthRiskCard(),   const SizedBox(height: 20),
+              const SizedBox(height: 20),
+
+              const HealthRiskCard(),   
+              const SizedBox(height: 20),
 
             // 4. HEALTH GOALS PROGRESS COMPONENT (NEW)
             const HealthGoalsCard(

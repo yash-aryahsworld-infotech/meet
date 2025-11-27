@@ -6,40 +6,41 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // UPDATED DATA: Matching the 3 cards in your image
     final List<StatItem> stats = [
       const StatItem(
         title: "Active Policies",
         count: "0",
-        icon: Icons.security_outlined, // Shield icon
-        themeColor: Color(0xFF1665D8), // Blue
+        icon: Icons.security_outlined,
+        themeColor: Color(0xFF1665D8),
       ),
       const StatItem(
         title: "Total Claims",
         count: "0",
-        icon: Icons.description_outlined, // Document icon
-        themeColor: Color(0xFF00C853), // Green
+        icon: Icons.description_outlined,
+        themeColor: Color(0xFF00C853),
       ),
       const StatItem(
         title: "Pending Claims",
         count: "0",
-        icon: Icons.attach_money, // Dollar/Currency icon
-        themeColor: Color(0xFFFF6D00), // Orange
+        icon: Icons.attach_money,
+        themeColor: Color(0xFFFF6D00),
       ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // RESPONSIVE LOGIC:
-        // Desktop (> 800px): Show 3 per row (to match the image)
-        // Tablet/Mobile: Show 1 per row (stacked) for better readability
-        int crossAxisCount = constraints.maxWidth > 800 ? 3 : 1;
-        
-        // Use a standard gap
+        double maxWidth = constraints.maxWidth;
+        int crossAxisCount;
+
+        if (maxWidth < 800) {
+          crossAxisCount = 2;
+        } else {
+          crossAxisCount = 3;
+        }
+
         double gap = 16.0;
-        
-        // Calculate width dynamically
-        double itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * gap)) / crossAxisCount;
+        double itemWidth =
+            (maxWidth - ((crossAxisCount - 1) * gap)) / crossAxisCount;
 
         return Wrap(
           spacing: gap,

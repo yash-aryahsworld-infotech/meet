@@ -6,7 +6,6 @@ import './schedulecomponent/upcoming_tab.dart';
 import './schedulecomponent/all_appointments_tab.dart';
 import './schedulecomponent/calendar_panel.dart';
 import './schedulecomponent/quick_stats.dart';
-import '../../utils/app_responsive.dart';
 class ScheduleComponent extends StatefulWidget {
   const ScheduleComponent({super.key});
 
@@ -28,9 +27,7 @@ class _ScheduleComponentState extends State<ScheduleComponent> {
     bool isTablet = width >= 600 && width < 1200;
     bool isDesktop = width >= 1200;
 
-    return Padding(
-      padding: AppResponsive.pagePadding(context),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(isMobile),
@@ -41,8 +38,7 @@ class _ScheduleComponentState extends State<ScheduleComponent> {
           if (isTablet) _buildTabletLayout(),
           if (isMobile) _buildMobileLayout(),
         ],
-      ),
-    );
+      );
   }
 
   // ---------------------------------------------------------

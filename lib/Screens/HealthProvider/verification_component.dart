@@ -19,9 +19,7 @@ class _VerificationComponentState extends State<VerificationComponent> {
     bool isTablet = AppResponsive.isTablet(context);
 
 
-    return Padding(
-      padding: AppResponsive.pagePadding(context),
-      child: Center(
+    return Center(
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(26),
@@ -140,7 +138,6 @@ class _VerificationComponentState extends State<VerificationComponent> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
