@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:healthcare_plus/auth/signin_page.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_toggle_switch.dart';
