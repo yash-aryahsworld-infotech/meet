@@ -4,26 +4,29 @@ class StatsCard extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
-  final Color color;
+  final Color iconColor;
+
+  final String? bottomDesc;       // OPTIONAL
+  final Color? bottomDescColor;   // OPTIONAL
 
   const StatsCard({
     super.key,
     required this.title,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.iconColor,
+    this.bottomDesc,          // optional
+    this.bottomDescColor,     // optional
   });
 
   @override
   Widget build(BuildContext context) {
-    // 1. Determine if device is mobile based on width
     final bool isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
-      height: double.infinity,
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 12 : 20, // Less padding on mobile
-        vertical: 10,
+        horizontal: isMobile ? 14 : 16,
+        vertical: isMobile ? 10 : 10,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -37,52 +40,70 @@ class StatsCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // 2. Expanded prevents the column from pushing the icon off-screen
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1, // Ensures it stays on one line
-                  overflow: TextOverflow.ellipsis, // Adds "..." if still too long
-                  style: TextStyle(
-                    // 3. Dynamic Font Size: Smaller on mobile
-                    fontSize: isMobile ? 11 : 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade500,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // TEXT BLOCK (Title + Value)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // TITLE
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isMobile ? 11 : 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // MAIN VALUE
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: isMobile ? 18 : 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    // 3. Dynamic Font Size: Smaller on mobile
-                    fontSize: isMobile ? 18 : 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    height: 1.0,
-                  ),
-                ),
-              ],
+              ),
+
+              const SizedBox(width: 8),
+
+              // ICON
+              Icon(
+                icon,
+                color: iconColor,
+                size: isMobile ? 22 : 28,
+              ),
+            ],
+          ),
+
+          // OPTIONAL BOTTOM DESCRIPTION
+          if (bottomDesc != null && bottomDesc!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+
+            Text(
+              bottomDesc!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: FontWeight.w500,
+                color: bottomDescColor ?? Colors.grey, // fallback color
+              ),
             ),
-          ),
-
-          const SizedBox(width: 8), // Space between text and icon
-
-          // Icon
-          Icon(
-            icon,
-            color: color,
-            // 3. Dynamic Icon Size: Smaller on mobile
-            size: isMobile ? 22 : 28,
-          ),
+          ],
         ],
       ),
     );

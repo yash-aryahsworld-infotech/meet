@@ -65,7 +65,7 @@ class HealthSummarySection extends StatelessWidget {
           title: item["title"],
           value: item["value"],
           icon: item["icon"],
-          color: item["color"],
+          iconColor: item["color"],
         );
       },
     );

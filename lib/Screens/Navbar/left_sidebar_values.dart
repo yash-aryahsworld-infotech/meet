@@ -219,7 +219,7 @@ final List<SidebarItem> corporateSidebar = [
     icon: Icons.people_alt_outlined,
     title: 'Employees',
     route: '/corporate/employees',
-    page: CorporateEmployeesPage(),
+    page: EmployeeManagementPage(),
   ),
 
   SidebarItem(

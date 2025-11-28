@@ -60,7 +60,7 @@ class StatsSection extends StatelessWidget {
               title: data['title'],
               value: data['value'],
               icon: data['icon'],
-              color: data['color'],
+              iconColor: data['color'],
             );
           },
         );
