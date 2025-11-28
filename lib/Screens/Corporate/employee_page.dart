@@ -1,65 +1,51 @@
 import 'package:flutter/material.dart';
-
-class CorporateEmployeesPage extends StatelessWidget {
-  const CorporateEmployeesPage({super.key});
+import 'package:healthcare_plus/Screens/Corporate/employee/employee_model.dart';
+import 'package:healthcare_plus/Screens/Corporate/employee/employeelistsection.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
+// Assuming your PageHeader is here:
+import '../../widgets/custom_header.dart';
+import './employee/stat_section.dart';
+class EmployeeManagementPage extends StatelessWidget {
+  const EmployeeManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Employees",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+    // Calculate stats dynamically based on the dummy list
 
-          const SizedBox(height: 20),
+    final bool isMobile = AppResponsive.isMobile(context);
+    final totalEmployees = allEmployees.length;
+    final activeEmployees = allEmployees.where((e) => e.isActive).length;
+    final totalHealthScore = allEmployees.fold(0, (sum, e) => sum + e.healthScore);
+    final avgHealthScore = (totalHealthScore / totalEmployees).toStringAsFixed(0);
+    final totalPrograms = allEmployees.fold(0, (sum, e) => sum + e.programs);
 
-          _searchBar(),
-
-          const SizedBox(height: 20),
-
-          Container(
-            height: 550,
-            padding: const EdgeInsets.all(10),
-            decoration: _boxDecoration(),
-            child: ListView.builder(
-              itemCount: 12,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(child: Text("E$index")),
-                  title: Text("Employee $index"),
-                  subtitle: Text("employee$index@company.com"),
-                  trailing: Icon(Icons.chevron_right),
-                );
-              },
+    return Material(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Header (Imported Component)
+            PageHeader(
+              title: 'Employee Management',
+              button1Icon: Icons.add,
+              button1Text: isMobile ? 'Employee' : 'Add Employee',
+              button1OnPressed: () {},
+              button2Text: isMobile ? 'Export' : 'Export Report',
+              button2OnPressed: () {},
             ),
-          )
-        ],
-      ),
-    );
-  }
+            // 2. Stats Section (Updated labels to match image)
+            StatsSection(
+              total: totalEmployees,
+              active: activeEmployees,
+              avgScore: avgHealthScore,
+              programs: totalPrograms,
+            ),
 
-  Widget _searchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: _boxDecoration(),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "Search employees...",
-          border: InputBorder.none,
+            const SizedBox(height: 24),
+
+            // 3. Employee List Section (Search, Filter, List)
+            const EmployeeListSection(),
+          ],
         ),
-      ),
-    );
-  }
-
-  BoxDecoration _boxDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 10),
-      ],
-    );
+      );
   }
 }
