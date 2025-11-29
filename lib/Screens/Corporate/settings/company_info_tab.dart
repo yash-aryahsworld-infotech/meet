@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
+import 'package:healthcare_plus/widgets/custom_button.dart';
 
 class CompanyInfoTab extends StatelessWidget {
   const CompanyInfoTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = AppResponsive.isMobile(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -30,9 +33,10 @@ class CompanyInfoTab extends StatelessWidget {
               const Text(
                 "Company Information",
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
@@ -42,8 +46,11 @@ class CompanyInfoTab extends StatelessWidget {
           _buildResponsiveTwoColumn(
             context,
             child1: _buildInput("Company Name", "TechCorp Ltd"),
-            child2: _buildDropdown("Industry", "Technology",
-                ["Technology", "Finance", "Healthcare"]),
+            child2: _buildDropdown("Industry", "Technology", [
+              "Technology",
+              "Finance",
+              "Healthcare",
+            ]),
           ),
           const SizedBox(height: 16),
 
@@ -51,14 +58,20 @@ class CompanyInfoTab extends StatelessWidget {
           _buildResponsiveTwoColumn(
             context,
             child1: _buildInput("Number of Employees", "200"),
-            child2: _buildDropdown("Timezone", "Asia/Kolkata (IST)",
-                ["Asia/Kolkata (IST)", "UTC", "PST"]),
+            child2: _buildDropdown("Timezone", "Asia/Kolkata (IST)", [
+              "Asia/Kolkata (IST)",
+              "UTC",
+              "PST",
+            ]),
           ),
           const SizedBox(height: 16),
 
           // Row 3: Address (Full Width)
-          _buildInput("Address", "123 Business Park, Bangalore, Karnataka 560001",
-              maxLines: 2),
+          _buildInput(
+            "Address",
+            "123 Business Park, Bangalore, Karnataka 560001",
+            maxLines: 2,
+          ),
           const SizedBox(height: 16),
 
           // Row 4: Phone, Email, Website (3 Columns)
@@ -74,23 +87,16 @@ class CompanyInfoTab extends StatelessWidget {
           _buildResponsiveTwoColumn(
             context,
             child1: _buildInput("Working Hours", "09:00-18:00"),
-            child2: _buildDropdown("Currency", "INR (₹)", ["INR (₹)", "USD (\$)", "EUR (€)"]),
+            child2: _buildDropdown("Currency", "INR (₹)", [
+              "INR (₹)",
+              "USD (\$)",
+              "EUR (€)",
+            ]),
           ),
           const SizedBox(height: 30),
 
           // Save Button
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text("Save Company Settings"),
-          ),
+          CustomButton(text: "Save Company Setting", width: isMobile ? double.infinity: 210, onPressed: () => {}),
         ],
       ),
     );
@@ -103,11 +109,14 @@ class CompanyInfoTab extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           initialValue: value,
@@ -115,17 +124,22 @@ class CompanyInfoTab extends StatelessWidget {
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: Color(0xFF2563EB))),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+            ),
           ),
         ),
       ],
@@ -137,26 +151,37 @@ class CompanyInfoTab extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           value: value,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 18,
+            color: Colors.grey,
+          ),
           style: const TextStyle(fontSize: 14, color: Colors.black87),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300)),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
           ),
           items: items.map((String val) {
             return DropdownMenuItem(value: val, child: Text(val));
@@ -168,19 +193,16 @@ class CompanyInfoTab extends StatelessWidget {
   }
 
   // Responsive Layout: 2 Columns on Desktop, 1 Column on Mobile
-  Widget _buildResponsiveTwoColumn(BuildContext context,
-      {required Widget child1, required Widget child2}) {
+  Widget _buildResponsiveTwoColumn(
+    BuildContext context, {
+    required Widget child1,
+    required Widget child2,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 600) {
           // Mobile: Stack vertically
-          return Column(
-            children: [
-              child1,
-              const SizedBox(height: 16),
-              child2,
-            ],
-          );
+          return Column(children: [child1, const SizedBox(height: 16), child2]);
         } else {
           // Desktop: Side by side
           return Row(
@@ -197,8 +219,12 @@ class CompanyInfoTab extends StatelessWidget {
   }
 
   // Responsive Layout: 3 Columns on Desktop, 1 Column on Mobile
-  Widget _buildResponsiveThreeColumn(BuildContext context,
-      {required Widget child1, required Widget child2, required Widget child3}) {
+  Widget _buildResponsiveThreeColumn(
+    BuildContext context, {
+    required Widget child1,
+    required Widget child2,
+    required Widget child3,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 800) {

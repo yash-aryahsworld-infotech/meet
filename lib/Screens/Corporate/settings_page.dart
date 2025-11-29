@@ -25,10 +25,8 @@ class _CorporateSettingsPageState extends State<CorporateSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF9FAFB), // Light gray background
+    return Material(// Light gray background
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

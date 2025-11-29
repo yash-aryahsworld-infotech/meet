@@ -36,7 +36,10 @@ class HealthMetricsTrendCard extends StatelessWidget {
           // ------------------- CHART -------------------
           Expanded(
             child: LineChart(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.bounceIn,
               LineChartData(
+                
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: true,

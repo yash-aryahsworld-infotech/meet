@@ -110,6 +110,7 @@ class _ProgramParticipationCard extends StatelessWidget {
                         color: Color(0xFFF59E0B)),
                     titlePositionPercentageOffset: 1.5,
                   ),
+                  
                 ],
               ),
             ),
