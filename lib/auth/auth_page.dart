@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'signin_page.dart';
 import 'signup_page.dart';
 import '../widgets/custom_toggle_switch.dart';
-import '../utils/responsive.dart';
+import '../../utils/app_responsive.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -16,7 +16,9 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    final responsive = Responsive(context);
+    final isTablet = AppResponsive.isTablet(context);
+    final isDesktop = AppResponsive.isDesktop(context);
+  
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -24,12 +26,12 @@ class _AuthPageState extends State<AuthPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.symmetric(
-            horizontal: responsive.defaultPadding,
-            vertical: responsive.defaultPadding * 1.5,
+            horizontal: isDesktop ? 40 : 25,
+            vertical: isDesktop ? 60 : 37.5,
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              if (responsive.isDesktop) {
+              if (isDesktop) {
                 // 🖥 Web/Desktop layout
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -76,17 +78,17 @@ class _AuthPageState extends State<AuthPage> {
                     Expanded(
                       flex: 1,
                       child: Center(
-                        child: _buildAuthCard(responsive),
+                        child: _buildAuthCard(),
                       ),
                     ),
                   ],
                 );
-              } else if (responsive.isTablet) {
+              } else if (isTablet) {
                 // 💻 Tablet layout
                 return Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 600),
-                    child: _buildAuthCard(responsive),
+                    child: _buildAuthCard(),
                   ),
                 );
               } else {
@@ -94,7 +96,7 @@ class _AuthPageState extends State<AuthPage> {
                 return Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
-                    child: _buildAuthCard(responsive),
+                    child: _buildAuthCard(),
                   ),
                 );
               }
@@ -106,15 +108,16 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   // 🔹 Extracted reusable auth card builder
-  Widget _buildAuthCard(Responsive responsive) {
+  Widget _buildAuthCard() {
+    final isDesktop = AppResponsive.isDesktop(context);
     return Container(
-      padding: EdgeInsets.all(responsive.isDesktop ? 40 : 25),
+      padding: EdgeInsets.all(isDesktop ? 40 : 25),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withAlpha(51),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 5),
@@ -129,7 +132,7 @@ class _AuthPageState extends State<AuthPage> {
             "Welcome to HealthCare Platform",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: responsive.scale(20),
+              fontSize: isDesktop ? 20 : 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
@@ -140,7 +143,7 @@ class _AuthPageState extends State<AuthPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey.shade600,
-              fontSize: responsive.scale(13),
+              fontSize: isDesktop ? 13 : 12,
             ),
           ),
           const SizedBox(height: 30),

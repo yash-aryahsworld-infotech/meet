@@ -2,10 +2,9 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:healthcare_plus/auth/signin_page.dart';
+import 'package:healthcare_plus/widgets/custom_tab.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_button.dart';
-import '../widgets/custom_toggle_switch.dart';
 
 class SignUpForm extends StatefulWidget {
   final VoidCallback onSwitchToSignIn;
@@ -40,7 +39,9 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     // 🔹 Basic Email Validation
-    if (!RegExp(r"^[\w\.-]+@[\w\.-]+\.\w+$").hasMatch(emailController.text.trim())) {
+    if (!RegExp(
+      r"^[\w\.-]+@[\w\.-]+\.\w+$",
+    ).hasMatch(emailController.text.trim())) {
       _showSnackBar("Enter a valid email address");
       return false;
     }
@@ -84,8 +85,10 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     try {
-
-      final DatabaseReference dbRef = FirebaseDatabase.instance.ref().child("healthcare").child("users");
+      final DatabaseReference dbRef = FirebaseDatabase.instance
+          .ref()
+          .child("healthcare")
+          .child("users");
 
       final newUserRef = dbRef.push();
       String userKey = newUserRef.key!;
@@ -96,7 +99,12 @@ class _SignUpFormState extends State<SignUpForm> {
         "last_name": lastNameController.text.trim(),
         "email": emailController.text.trim(),
         "phone": phoneController.text.trim(),
-        "role": selectedRole == 0 ? "Patient" : "Healthcare Provider",
+        "role": selectedRole == 0
+            ? "Patient"
+            : selectedRole == 1
+            ? "Healthcare Provider"
+            : "Corporate",
+
         "password": hashPassword(passwordController.text.trim()),
         "created_at": DateTime.now().toIso8601String(),
       });
@@ -118,7 +126,6 @@ class _SignUpFormState extends State<SignUpForm> {
       confirmPasswordController.clear();
 
       widget.onSwitchToSignIn();
-
     } catch (e) {
       setState(() => _isLoading = false);
       _showSnackBar("Error saving data: $e");
@@ -182,13 +189,17 @@ class _SignUpFormState extends State<SignUpForm> {
               ),
             ],
           ),
-      
+
           const SizedBox(height: 20),
-      
+
           // 🔹 Email
           const Text(
             "Email Address",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 6),
           CustomInputField(
@@ -198,11 +209,15 @@ class _SignUpFormState extends State<SignUpForm> {
             inputType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 20),
-      
+
           // 🔹 Phone
           const Text(
             "Phone Number",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 6),
           CustomInputField(
@@ -212,24 +227,32 @@ class _SignUpFormState extends State<SignUpForm> {
             inputType: TextInputType.phone,
           ),
           const SizedBox(height: 20),
-      
+
           // 🔹 Role Toggle (Reusable)
           const Text(
             "I am a",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
-          CustomToggleSwitch(
-            options: const ["Patient", "Healthcare Provider"],
+          TabToggle(
+            options: const ["Patient", "Healthcare Provider","Corporate"],
             selectedIndex: selectedRole,
             onSelected: (index) => setState(() => selectedRole = index),
           ),
           const SizedBox(height: 20),
-      
+
           // 🔹 Password
           const Text(
             "Password",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 6),
           CustomInputField(
@@ -239,11 +262,15 @@ class _SignUpFormState extends State<SignUpForm> {
             obscureText: true,
           ),
           const SizedBox(height: 20),
-      
+
           // 🔹 Confirm Password
           const Text(
             "Confirm Password",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 6),
           CustomInputField(
@@ -253,14 +280,14 @@ class _SignUpFormState extends State<SignUpForm> {
             obscureText: true,
           ),
           const SizedBox(height: 30),
-      
+
           // 🔹 Submit Button (with loader)
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : CustomButton(
-            text: "Create Account",
-            onPressed: _saveUserToFirebase,
-          ),
+                  text: "Create Account",
+                  onPressed: _saveUserToFirebase,
+                ),
         ],
       ),
     );

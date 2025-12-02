@@ -7,12 +7,17 @@ class AppResponsive {
   // ------------------------------------------------------------
   // BREAKPOINTS
   // ------------------------------------------------------------
+  static const double smallMobile = 375;
   static const double mobile = 600;
   static const double tablet = 1024;
   static const double desktop = 1440;
 
+  static bool isSmallMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width <= smallMobile;
+
   static bool isMobile(BuildContext context) =>
       MediaQuery.of(context).size.width < mobile;
+
 
   static bool isTablet(BuildContext context) =>
       MediaQuery.of(context).size.width >= mobile &&
@@ -54,7 +59,7 @@ class AppResponsive {
 
   /// Global horizontal padding for navbar & page sections
   static double horizontalPadding(BuildContext ctx) {
-    if (isDesktop(ctx)) return 24;
+    if (isDesktop(ctx)) return 16;
     if (isTablet(ctx)) return 20;
     return 16; // mobile
   }

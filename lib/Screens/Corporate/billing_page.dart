@@ -1,44 +1,97 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/Screens/Corporate/billing/invoice_stats_section.dart';
+import 'package:healthcare_plus/Screens/Corporate/billing/invoice_tab.dart';
+import 'package:healthcare_plus/Screens/Corporate/billing/payment_method.dart';
+import 'package:healthcare_plus/Screens/Corporate/billing/subscription_tab.dart';
+import 'package:healthcare_plus/utils/app_responsive.dart';
+import 'package:healthcare_plus/widgets/custom_header.dart';
+import 'package:healthcare_plus/widgets/custom_tab.dart';
 
-class CorporateBillingPage extends StatelessWidget {
+// Your tab screens:
+
+
+class CorporateBillingPage extends StatefulWidget {
   const CorporateBillingPage({super.key});
 
   @override
+  State<CorporateBillingPage> createState() => _CorporateBillingPageState();
+}
+
+class _CorporateBillingPageState extends State<CorporateBillingPage> {
+  int selectedTab = 0;
+
+  final List<String> tabs = [
+    "Invoices",
+    "Subscritions",
+    "Payment Methods",
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    final bool isMobile = AppResponsive.isMobile(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Billing",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          PageHeader(
+            title: "Billing & Payments",
+            button1Icon: Icons.download,
+            button1Text: "Export All",
+            button1OnPressed: () {},
+            button2Icon: Icons.card_membership,
+            button2Text: isMobile ? "Update" : "Update Payment Method",
+            button2OnPressed: () {},
+          ),
 
-          const SizedBox(height: 30),
+          const InvoiceStatsSection(
+            totalInvoices: 4,
+            paidInvoices: 2,
+            pendingAmount: 90000,
+            avgMonthlySpend: 48167,
+          ),
 
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: _box(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Current Plan: Premium",
-                    style:
-                    TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text("Renews on: 12 Jan 2025"),
-              ],
-            ),
-          )
+          
+
+   
+          const SizedBox(height: 20),
+
+          // TAB 
+         
+          TabToggle(
+            
+            options: tabs,
+            selectedIndex: selectedTab,
+            onSelected: (index) {
+              setState(() {
+                selectedTab = index;
+              });
+            },
+          ),
+          
+
+          const SizedBox(height: 20),
+
+          // TAB CONTENT
+          _buildTabContent(),
         ],
       ),
     );
   }
 
-  BoxDecoration _box() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: const [
-      BoxShadow(color: Colors.black12, blurRadius: 10)
-    ],
-  );
+  // --------------------------------------------
+  // TAB CONTENT HANDLER
+  // --------------------------------------------
+  Widget _buildTabContent() {
+    switch (selectedTab) {
+      case 0:
+        return const InvoicesPage();
+      case 1:
+        return const SubscriptionPage();
+      case 2:
+        return const PaymentMethodsPage();
+      default:
+        return const InvoicesPage();
+    }
+  }
 }

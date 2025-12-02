@@ -5,25 +5,28 @@ class PatientOverviewSection extends StatelessWidget {
   const PatientOverviewSection({super.key});
 
   Widget overviewItem(String value, String label, Color color) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
           ),
-        ],
-      ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
@@ -41,6 +44,7 @@ class PatientOverviewSection extends StatelessWidget {
           BoxShadow(color: Colors.black12, blurRadius: 6),
         ],
       ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -55,24 +59,38 @@ class PatientOverviewSection extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          /// Values Row / Column
-          isMobile
-              ? Column(
-                  children: [
-                    overviewItem("245", "Total Patients", Colors.blue),
-                    const SizedBox(height: 20),
-                    overviewItem("89%", "Satisfaction Rate", Colors.green),
-                    const SizedBox(height: 20),
-                    overviewItem("156", "Consultations This Month", Colors.teal),
-                  ],
-                )
-              : Row(
-                  children: [
-                    overviewItem("245", "Total Patients", Colors.blue),
-                    overviewItem("89%", "Satisfaction Rate", Colors.green),
-                    overviewItem("156", "Consultations This Month", Colors.teal),
-                  ],
-                )
+          /// ---------------------- MOBILE ----------------------
+          if (isMobile)
+            Column(
+              children: [
+                overviewItem("245", "Total Patients", Colors.blue),
+                const SizedBox(height: 20),
+                Container(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 20),
+
+                overviewItem("89%", "Satisfaction Rate", Colors.green),
+                const SizedBox(height: 20),
+                Container(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 20),
+
+                overviewItem(
+                    "156", "Consultations This Month", Colors.teal),
+              ],
+            )
+
+          /// ---------------------- TABLET & DESKTOP ----------------------
+          else
+            Row(
+              children: [
+                Expanded(
+                    child: overviewItem("245", "Total Patients", Colors.blue)),
+                Expanded(
+                    child: overviewItem("89%", "Satisfaction Rate", Colors.green)),
+                Expanded(
+                    child: overviewItem(
+                        "156", "Consultations This Month", Colors.teal)),
+              ],
+            )
         ],
       ),
     );

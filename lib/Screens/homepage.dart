@@ -33,7 +33,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (widget.userRole.toLowerCase() == "patient") {
       return patientSidebar;
     } else if(widget.userRole.toLowerCase() == "corporate") {
-      return corporateSidebar;
+      return corporateSidebar;}
+    else if(widget.userRole.toLowerCase() == "admin") {
+      return adminSidebar;
     } else {
       return healthProviderSidebar;
     }

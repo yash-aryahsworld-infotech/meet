@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:healthcare_plus/Screens/Admin/admin_analytics_page.dart';
+import 'package:healthcare_plus/Screens/Admin/admindashboard.dart';
+import 'package:healthcare_plus/Screens/Admin/doctor_verification.dart';
+import 'package:healthcare_plus/Screens/Admin/providers_page.dart';
+import 'package:healthcare_plus/Screens/Admin/system_settings.dart';
+import 'package:healthcare_plus/Screens/Admin/usersmanagement.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/consultations_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/dashboard_component.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/earnings_compoenent.dart';
@@ -12,6 +18,7 @@ import 'package:healthcare_plus/Screens/Patient/appointments.dart';
 import 'package:healthcare_plus/Screens/Patient/health_record.dart';
 import 'package:healthcare_plus/Screens/Patient/help_and_support.dart';
 import 'package:healthcare_plus/Screens/Patient/insurance.dart';
+import 'package:healthcare_plus/Screens/Patient/near_by_healthcare.dart';
 import 'package:healthcare_plus/Screens/Patient/payments.dart';
 import 'package:healthcare_plus/Screens/Patient/prescriptions.dart';
 import 'package:healthcare_plus/Screens/Patient/privacy_and_consent.dart';
@@ -63,6 +70,11 @@ final List<SidebarItem> patientSidebar = [
     title: 'Book Consultation',
     route: '/bookconsultation',
     page: BookConsultation(),
+  ),  SidebarItem(
+    icon: Icons.medical_services_outlined,
+    title: 'Doctors',
+    route: '/doctors',
+    page: NearbyHealthcare(),
   ),
   SidebarItem(
     icon: Icons.calendar_today_outlined,
@@ -196,6 +208,7 @@ final List<SidebarItem> healthProviderSidebar = [
     title: 'Settings',
     route: '/doctor/settings',
     page: SettingsComponent(),
+
   ),
 ];
 
@@ -212,7 +225,7 @@ final List<SidebarItem> corporateSidebar = [
     icon: Icons.people_alt_outlined,
     title: 'Employees',
     route: '/corporate/employees',
-    page: CorporateEmployeesPage(),
+    page: EmployeeManagementPage(),
   ),
 
   SidebarItem(
@@ -242,5 +255,51 @@ final List<SidebarItem> corporateSidebar = [
     title: 'Settings',
     route: '/corporate/settings',
     page: CorporateSettingsPage(),
+  ),
+];
+
+
+final List<SidebarItem> adminSidebar = [
+  SidebarItem(
+      icon: Icons.home_rounded, // Matches the Home/Dashboard icon
+      title: 'Dashboard',
+      route: '/admin/dashboard',
+      page: const AdminDashboard(),
+      // notificationCount: 0, // Add if needed
+  ),
+
+  SidebarItem(
+    icon: Icons.people_outline_rounded, // Matches "Users" icon
+    title: 'Users',
+    route: '/admin/users',
+    page: const UsersManagementPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.business_outlined, // Matches "Providers" (Building/Office style)
+    title: 'Providers',
+    route: '/admin/providers',
+    page: const ProvidersPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.shield_outlined, // Matches "Doctor Verification" (Shield)
+    title: 'Doctor Verification',
+    route: '/admin/verification',
+    page: const DoctorVerificationPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.settings_outlined, // Matches "System" (Gear)
+    title: 'System',
+    route: '/admin/system',
+    page: const SystemSettingsPage(),
+  ),
+
+  SidebarItem(
+    icon: Icons.show_chart_rounded, // Matches "Analytics" (Line Graph)
+    title: 'Analytics',
+    route: '/admin/analytics',
+    page: const AdminAnalyticsPage(),
   ),
 ];
