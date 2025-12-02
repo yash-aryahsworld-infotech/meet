@@ -1,0 +1,142 @@
+import 'package:flutter/material.dart';
+import './booking_bottom_sheet.dart'; // Import for the booking button
+
+class DoctorDetailsPage extends StatelessWidget {
+  final Map<String, dynamic> doctor;
+
+  const DoctorDetailsPage({super.key, required this.doctor});
+
+  // Helper for Image
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return AssetImage(imagePath);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Doctor Details"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- 1. PROFILE HEADER ---
+            Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Hero(
+                    tag: doctor['image'], // Smooth animation from the card
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage: _getImageProvider(doctor['image']),
+                      backgroundColor: Colors.blue.shade50,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    doctor['name'],
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "${doctor['degree']} - ${doctor['specialty']}",
+                    style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+
+            // --- 2. STATS ROW ---
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStatItem("Experience", doctor['experience']),
+                  _buildStatItem("Rating", "${doctor['rating']}"),
+                  _buildStatItem("Patients", "1000+"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+
+            // --- 3. ABOUT SECTION ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("About Doctor", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Text(
+                    doctor['about'],
+                    style: TextStyle(color: Colors.grey[600], height: 1.5, fontSize: 15),
+                  ),
+                  const SizedBox(height: 25),
+                  
+                  const Text("Working Hours", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Text("Mon - Fri: 09:00 AM - 08:00 PM", style: TextStyle(color: Colors.grey[600])),
+                  const SizedBox(height: 80), // Space for bottom button
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // --- 4. BOTTOM BOOK BUTTON ---
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, -5))],
+        ),
+        child: SizedBox(
+          height: 50,
+          child: ElevatedButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                builder: (context) => BookingBottomSheet(doctor: doctor),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Book Appointment", style: TextStyle(fontSize: 16, color: Colors.white)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+}

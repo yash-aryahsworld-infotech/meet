@@ -71,9 +71,9 @@ final List<SidebarItem> patientSidebar = [
     route: '/bookconsultation',
     page: BookConsultation(),
   ),  SidebarItem(
-    icon: Icons.location_on_outlined,
-    title: 'Nearby Hospitals',
-    route: '/nearby-hospitals',
+    icon: Icons.medical_services_outlined,
+    title: 'Doctors',
+    route: '/doctors',
     page: NearbyHealthcare(),
   ),
   SidebarItem(
