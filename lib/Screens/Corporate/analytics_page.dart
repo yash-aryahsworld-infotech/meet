@@ -5,7 +5,8 @@ import 'package:healthcare_plus/Screens/Corporate/analytics/overview_tab.dart';
 import 'package:healthcare_plus/Screens/Corporate/analytics/programs_tab.dart';
 
 import 'package:healthcare_plus/widgets/custom_support_tab_toggle.dart';
-import './analytics/stats_section.dart ';
+
+import '../HealthProvider/stats_section.dart';
 
 class CorporateAnalyticsPage extends StatefulWidget {
   const CorporateAnalyticsPage({super.key});

@@ -78,6 +78,7 @@ class _SignUpFormState extends State<SignUpForm> {
 
     setState(() => _isLoading = true);
 
+    // Hash password
     String hashPassword(String password) {
       final bytes = utf8.encode(password);
       final digest = sha256.convert(bytes);
@@ -85,26 +86,29 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     try {
-      final DatabaseReference dbRef = FirebaseDatabase.instance
-          .ref()
-          .child("healthcare")
-          .child("users");
+      // Root reference
+      final DatabaseReference dbRef =
+      FirebaseDatabase.instance.ref().child("healthcare/users");
 
-      final newUserRef = dbRef.push();
-      String userKey = newUserRef.key!;
+      // Correct role folder
+      String rolePath = selectedRole == 0
+          ? "patients"
+          : selectedRole == 1
+          ? "providers"
+          : "corporates";
 
-      await dbRef.child(userKey).set({
+      // ⭐ PUSH INSIDE ROLE NODE (CORRECT WAY)
+      final roleRef = dbRef.child(rolePath).push();
+      String userKey = roleRef.key!;
+
+      // Save user
+      await roleRef.set({
         "userKey": userKey,
-        "first_name": firstNameController.text.trim(),
-        "last_name": lastNameController.text.trim(),
+        "firstName": firstNameController.text.trim(),
+        "lastName": lastNameController.text.trim(),
         "email": emailController.text.trim(),
         "phone": phoneController.text.trim(),
-        "role": selectedRole == 0
-            ? "Patient"
-            : selectedRole == 1
-            ? "Healthcare Provider"
-            : "Corporate",
-
+        "role": rolePath, // stored as "patients/providers/corporate"
         "password": hashPassword(passwordController.text.trim()),
         "created_at": DateTime.now().toIso8601String(),
       });
@@ -118,6 +122,7 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
       );
 
+      // Clear fields
       firstNameController.clear();
       lastNameController.clear();
       emailController.clear();

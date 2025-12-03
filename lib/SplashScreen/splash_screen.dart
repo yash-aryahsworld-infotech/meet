@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
         MaterialPageRoute(
           builder: (context) => DashboardPage(
             userKey: userKey,
-            userRole: userRole ?? "Patient",
+            userRole: userRole ?? "patients",
           ),
         ),
       );

@@ -30,14 +30,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Pick correct sidebar
   List<SidebarItem> get sidebarItems {
-    if (widget.userRole.toLowerCase() == "patient") {
-      return patientSidebar;
-    } else if(widget.userRole.toLowerCase() == "corporate") {
-      return corporateSidebar;}
+    if (widget.userRole.toLowerCase() == "providers") {
+      return healthProviderSidebar;
+    } else if(widget.userRole.toLowerCase() == "corporates") {
+      return corporateSidebar;
+    }
     else if(widget.userRole.toLowerCase() == "admin") {
       return adminSidebar;
     } else {
-      return healthProviderSidebar;
+      return patientSidebar;
     }
   }
 
@@ -50,8 +51,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // 🔥 Fetch user name from Firebase by userKey
   Future<void> _loadUserDetails() async {
+
     final ref = FirebaseDatabase.instance.ref(
-      "healthcare/users/${widget.userKey}",
+      "healthcare/users/${widget.userRole}/${widget.userKey}",
     );
 
     final snapshot = await ref.get();

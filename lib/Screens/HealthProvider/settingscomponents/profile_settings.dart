@@ -1,4 +1,6 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_input_field.dart';
 
@@ -11,24 +13,119 @@ class ProfileSettings extends StatefulWidget {
 
 class _ProfileSettingsState extends State<ProfileSettings> {
   // ---------------- Controllers ----------------
-  final TextEditingController firstName = TextEditingController(text: "Berry");
-  final TextEditingController lastName = TextEditingController(text: "Alien");
-  final TextEditingController email = TextEditingController(text: "abcd@gmail.com");
+  final TextEditingController firstName = TextEditingController();
+  final TextEditingController lastName = TextEditingController();
+  final TextEditingController email = TextEditingController();
   final TextEditingController phone = TextEditingController();
   final TextEditingController license = TextEditingController();
-  final TextEditingController experience = TextEditingController(text: "10");
-  final TextEditingController fee = TextEditingController(text: "500");
+  final TextEditingController experience = TextEditingController();
+  final TextEditingController fee = TextEditingController();
 
-  // Specialties
-  final List<String> specialties = ["General Medicine"];
   final TextEditingController specialtyController = TextEditingController();
-
-  // ---------------- NEW: Achievements Controllers ----------------
-  final List<String> achievements = ["Best Doctor Award 2023"];
   final TextEditingController achievementController = TextEditingController();
+
+  List<String> specialties = [];
+  List<String> achievements = [];
+
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
+
+  String? userKey;
+  String? userRole;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAndLoad();
+  }
+
+  Future<void> _initAndLoad() async {
+    final prefs = await SharedPreferences.getInstance();
+    userKey = prefs.getString("userKey");
+    userRole = prefs.getString("userRole"); // expected: "providers"
+
+    if (userKey == null || userKey!.isEmpty || userRole == null || userRole!.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User not logged in")),
+      );
+      setState(() => isLoading = false);
+      return;
+    }
+
+    await _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final snap = await _dbRef.child("healthcare/users/$userRole/$userKey").get();
+
+      if (snap.exists) {
+        final data = Map<String, dynamic>.from(snap.value as Map);
+
+        setState(() {
+          firstName.text = data["first_name"] ?? data["firstName"] ?? "";
+          lastName.text = data["last_name"] ?? data["lastName"] ?? "";
+          email.text = data["email"] ?? "";
+          phone.text = data["phone"] ?? "";
+          license.text = data["medicalLicense"] ?? "";
+          experience.text = data["experienceYears"]?.toString() ?? "";
+          fee.text = data["consultationFee"]?.toString() ?? "";
+
+          specialties = List<String>.from(data["specialties"] ?? []);
+          achievements = List<String>.from(data["achievements"] ?? []);
+
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error loading profile: $e")),
+      );
+    }
+  }
+
+  Future<void> saveProfile() async {
+    if (userKey == null || userRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User Not Found")),
+      );
+      return;
+    }
+
+    final profileMap = {
+      "firstName": firstName.text.trim(),
+      "lastName": lastName.text.trim(),
+      "email": email.text.trim(),
+      "phone": phone.text.trim(),
+      "medicalLicense": license.text.trim(),
+      "experienceYears": experience.text.trim(),
+      "consultationFee": fee.text.trim(),
+      "specialties": specialties,
+      "achievements": achievements,
+      "updatedAt": DateTime.now().toIso8601String(),
+    };
+
+    try {
+      await _dbRef.child("healthcare/users/$userRole/$userKey").update(profileMap);
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Profile saved successfully")));
+
+      await _loadProfile();
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Failed to save profile: $e")));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) return const Center(child: CircularProgressIndicator());
+
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -86,13 +183,9 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           // ---------------- NAME FIELDS ----------------
           Row(
             children: [
-              Expanded(
-                child: _labeledInputField("First Name", firstName, Icons.person),
-              ),
+              Expanded(child: _labeledInputField("First Name", firstName, Icons.person)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _labeledInputField("Last Name", lastName, Icons.person_outline),
-              ),
+              Expanded(child: _labeledInputField("Last Name", lastName, Icons.person_outline)),
             ],
           ),
 
@@ -101,51 +194,34 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           // ---------------- EMAIL + PHONE ----------------
           Row(
             children: [
-              Expanded(
-                child: _labeledInputField("Email", email, Icons.email_outlined),
-              ),
+              Expanded(child: _labeledInputField("Email", email, Icons.email_outlined)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _labeledInputField("Phone", phone, Icons.phone),
-              ),
+              Expanded(child: _labeledInputField("Phone", phone, Icons.phone)),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          _labeledInputField(
-            "Medical License Number",
-            license,
-            Icons.badge_outlined,
-          ),
+          _labeledInputField("Medical License Number", license, Icons.badge_outlined),
 
           const SizedBox(height: 16),
 
-          // ---------------- EXPERIENCE + FEE ----------------
           Row(
             children: [
-              Expanded(
-                child: _labeledInputField("Years of Experience", experience, Icons.timeline),
-              ),
+              Expanded(child: _labeledInputField("Years of Experience", experience, Icons.timeline)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _labeledInputField("Consultation Fee (₹)", fee, Icons.currency_rupee),
-              ),
+              Expanded(child: _labeledInputField("Consultation Fee (₹)", fee, Icons.currency_rupee)),
             ],
           ),
 
           const SizedBox(height: 16),
 
-          // ---------------- BIO ----------------
           _inputField("Professional Bio", "", maxLines: 4),
 
           const SizedBox(height: 30),
 
-          // ---------------- SPECIALTIES SECTION ----------------
-          const Text(
-            "Specialties",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-          ),
+          // ---------------- SPECIALTIES ----------------
+          const Text("Specialties", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
 
           Wrap(
@@ -157,14 +233,12 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                 backgroundColor: Colors.grey.shade200,
                 deleteIcon: const Icon(Icons.close, size: 18),
                 onDeleted: () => setState(() => specialties.remove(s)),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               );
             }).toList(),
           ),
 
           const SizedBox(height: 16),
 
-          // Add Specialty Input
           Row(
             children: [
               Expanded(
@@ -198,32 +272,27 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 30),
 
-          // ---------------- NEW: ACHIEVEMENTS SECTION ----------------
-          const Text(
-            "Achievements & Awards",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-          ),
+          // ---------------- ACHIEVEMENTS ----------------
+          const Text("Achievements & Awards",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
 
-          // Display Achievements Chips
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: achievements.map((a) {
               return Chip(
                 label: Text(a),
-                backgroundColor: Colors.amber.shade50, // Different color for awards
+                backgroundColor: Colors.amber.shade50,
                 side: BorderSide(color: Colors.amber.shade200),
                 deleteIcon: const Icon(Icons.close, size: 18),
                 onDeleted: () => setState(() => achievements.remove(a)),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               );
             }).toList(),
           ),
 
           const SizedBox(height: 16),
 
-          // Add Achievement Input
           Row(
             children: [
               Expanded(
@@ -257,17 +326,13 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 30),
 
-          // ---------------- SAVE PROFILE ----------------
+          // ---------------- SAVE BUTTON ----------------
           SizedBox(
             width: 200,
             child: CustomButton(
               text: "Save Profile",
               icon: Icons.save,
-              onPressed: () {
-                // TODO: Handle Save Logic
-                print("Saved Specialties: $specialties");
-                print("Saved Achievements: $achievements");
-              },
+              onPressed: saveProfile,
             ),
           ),
         ],
@@ -275,7 +340,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     );
   }
 
-  // Helper for Input Decoration to avoid code repetition
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
@@ -288,51 +352,29 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     );
   }
 
-  // ---------------- LABEL + CUSTOM INPUT FIELD ----------------
-  Widget _labeledInputField(
-    String label,
-    TextEditingController controller,
-    IconData icon,
-  ) {
+  Widget _labeledInputField(String label, TextEditingController controller, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        CustomInputField(
-          labelText: "",
-          icon: icon,
-          controller: controller,
-        ),
+        CustomInputField(labelText: "", icon: icon, controller: controller),
       ],
     );
   }
 
-  // ---------------- OLD BIO INPUT FIELD ----------------
-  Widget _inputField(
-    String label,
-    String placeholder, {
-    bool readOnly = false,
-    int maxLines = 1,
-  }) {
+  Widget _inputField(String label, String placeholder, {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
-          readOnly: readOnly,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: placeholder,
             filled: true,
-            fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey.shade300),

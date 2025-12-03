@@ -39,56 +39,74 @@ class _SignInFormState extends State<SignInForm> {
     setState(() => _isLoading = true);
 
     try {
-      final DatabaseReference ref =
-      FirebaseDatabase.instance.ref("healthcare/users");
+      final ref = FirebaseDatabase.instance.ref("healthcare/users");
 
-      final snapshot = await ref.once();
+      final snapshot = await ref.get();
 
-      Map<dynamic, dynamic> data =
-      snapshot.snapshot.value as Map<dynamic, dynamic>;
-
-      bool found = false;
-      bool isUserLogin = false;
-      String userRole = "patient";
-      String userKey = "";
-
-      // 🔎 Loop through users to match email
-      data.forEach((key, user) async {
-        if (user["email"] == email) {
-          found = true;
-
-          userKey = user["userKey"];
-          userRole = user["role"];
-
-          String storedHashedPassword = user["password"];
-          String enteredHashedPassword = hashPassword(password);
-
-          if (storedHashedPassword == enteredHashedPassword) {
-
-            isUserLogin = true;
-
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            await prefs.setString("userKey", userKey);
-            await prefs.setBool("userFound", isUserLogin);
-            await prefs.setString("userRole", userRole);
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => DashboardPage(userKey: userKey, userRole: userRole,)),
-            );
-
-            _showSnackBar("Login Successful!", bg: Colors.green);
-          } else {
-            _showSnackBar("Incorrect password");
-          }
-        }
-      });
-
-      if (!found) {
-        _showSnackBar("No user found with this email");
+      if (!snapshot.exists) {
+        _showSnackBar("No users found in database");
+        setState(() => _isLoading = false);
+        return;
       }
+
+      Map data = snapshot.value as Map;
+
+      String? finalRole;
+      String? finalUserKey;
+      Map? finalUserData;
+
+      // LOOP THROUGH ROLES → patients/providers/corporate
+      for (String role in ["patients", "providers", "corporate"]) {
+        if (data[role] != null) {
+          Map usersOfRole = data[role];
+
+          usersOfRole.forEach((key, user) {
+            if (user["email"] == email) {
+              finalRole = role;
+              finalUserKey = key;
+              finalUserData = user;
+            }
+          });
+        }
+      }
+
+      if (finalUserData == null) {
+        _showSnackBar("No user found with this email");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Compare passwords
+      String storedHash = finalUserData!["password"];
+      String enteredHash = hashPassword(password);
+
+      if (storedHash != enteredHash) {
+        _showSnackBar("Incorrect password");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // LOGIN SUCCESS → Save user to SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString("userKey", finalUserKey!);
+      await prefs.setString("userRole", finalRole!); // patients/providers/corporate
+      await prefs.setBool("userFound", true);
+
+      // Navigate to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DashboardPage(
+            userKey: finalUserKey!,
+            userRole: finalRole!,
+          ),
+        ),
+      );
+
+      _showSnackBar("Login Successful!", bg: Colors.green);
+
     } catch (e) {
-      _showSnackBar("Error: $e");
+      _showSnackBar("Login failed: $e");
     }
 
     setState(() => _isLoading = false);
