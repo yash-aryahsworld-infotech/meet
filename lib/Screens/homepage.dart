@@ -62,7 +62,7 @@ class _DashboardPageState extends State<DashboardPage> {
       final data = snapshot.value as Map<dynamic, dynamic>;
 
       setState(() {
-        userName = "${data['first_name']} ${data['last_name']}";
+        userName = "${data['firstName']} ${data['lastName']}";
         isLoading = false;
       });
     } else {

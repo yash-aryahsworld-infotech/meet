@@ -21,6 +21,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   final TextEditingController experience = TextEditingController();
   final TextEditingController fee = TextEditingController();
 
+  final TextEditingController bio = TextEditingController();
+
   final TextEditingController specialtyController = TextEditingController();
   final TextEditingController achievementController = TextEditingController();
 
@@ -72,6 +74,8 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           experience.text = data["experienceYears"]?.toString() ?? "";
           fee.text = data["consultationFee"]?.toString() ?? "";
 
+          bio.text = data["bio"] ?? "";
+
           specialties = List<String>.from(data["specialties"] ?? []);
           achievements = List<String>.from(data["achievements"] ?? []);
 
@@ -104,6 +108,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
       "medicalLicense": license.text.trim(),
       "experienceYears": experience.text.trim(),
       "consultationFee": fee.text.trim(),
+      "bio": bio.text.trim(),
       "specialties": specialties,
       "achievements": achievements,
       "updatedAt": DateTime.now().toIso8601String(),
@@ -216,7 +221,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
 
           const SizedBox(height: 16),
 
-          _inputField("Professional Bio", "", maxLines: 4),
+          _labeledMultilineField("Professional Bio", bio, 4),
 
           const SizedBox(height: 30),
 
@@ -375,6 +380,28 @@ class _ProfileSettingsState extends State<ProfileSettings> {
             hintText: placeholder,
             filled: true,
             fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _labeledMultilineField(String label, TextEditingController controller, int lines) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: lines,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            hintText: "",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey.shade300),
