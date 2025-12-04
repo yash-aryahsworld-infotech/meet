@@ -22,6 +22,7 @@ import 'package:healthcare_plus/Screens/Patient/near_by_healthcare.dart';
 import 'package:healthcare_plus/Screens/Patient/payments.dart';
 import 'package:healthcare_plus/Screens/Patient/prescriptions.dart';
 import 'package:healthcare_plus/Screens/Patient/privacy_and_consent.dart';
+import 'package:healthcare_plus/Screens/Patient/profile_component.dart';
 import 'package:healthcare_plus/Screens/Patient/security.dart';
 import 'package:healthcare_plus/Screens/Patient/upload_documents.dart';
 import 'package:healthcare_plus/Screens/Patient/wallet.dart';
@@ -64,6 +65,12 @@ final List<SidebarItem> patientSidebar = [
     title: 'Dashboard',
     route: '/patientdashboard',
     page: PatientDashboard(),
+  ),
+   SidebarItem(
+    icon: Icons.person_2_rounded,
+    title: 'Profile',
+    route: '/profile',
+    page: PatientProfileManager(),
   ),
   SidebarItem(
     icon: Icons.video_call,
