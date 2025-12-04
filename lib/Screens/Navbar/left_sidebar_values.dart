@@ -264,7 +264,7 @@ final List<SidebarItem> adminSidebar = [
       icon: Icons.home_rounded, // Matches the Home/Dashboard icon
       title: 'Dashboard',
       route: '/admin/dashboard',
-      page: const AdminDashboard(),
+      page:  AdminDashboard(),
       // notificationCount: 0, // Add if needed
   ),
 
