@@ -40,7 +40,7 @@ class _SignUpFormState extends State<SignUpForm> {
 
     // 🔹 Basic Email Validation
     if (!RegExp(
-      r"^[\w\.-]+@[\w\.-]+\.\w+$",
+      r"^[\w.-]+@[\w.-]+\.\w+$",
     ).hasMatch(emailController.text.trim())) {
       _showSnackBar("Enter a valid email address");
       return false;
