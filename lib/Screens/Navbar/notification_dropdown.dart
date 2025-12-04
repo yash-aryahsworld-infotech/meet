@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-// TODO: Import your Profile Settings Page here
 import '../../Screens/HealthProvider/settingscomponents/profile_settings.dart';
 
 class NotificationDropdown extends StatelessWidget {
