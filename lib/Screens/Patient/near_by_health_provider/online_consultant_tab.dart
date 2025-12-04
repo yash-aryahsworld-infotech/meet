@@ -1,5 +1,6 @@
-
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import './healthcare_filters.dart';
 import './doctor_card.dart';
 
@@ -11,87 +12,51 @@ class OnlineConsultantPage extends StatefulWidget {
 }
 
 class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
   String _selectedFilter = "All";
   String _searchQuery = "";
+  String? _currentUserKey;
 
   final List<String> _filters = ["All", "General Physician", "Cardiologist", "Pediatrician", "Dermatologist"];
 
-  // Doctor Data
-  final List<Map<String, dynamic>> _doctors = [
-    {
-      "name": "Dr. Sarah Wilson",
-      "specialty": "General Physician",
-      "degree": "MBBS, MD", 
-      "experience": "8 Years",
-      "about": "Dr. Sarah is a compassionate General Physician with 8 years of experience.",
-      "image": "images/female.jpg", // Ensure this exists or use network URL
-      "price": 299,
-      "rating": 4.8,
-      "durations": ["10 min", "30 min"]
-    },
-    {
-      "name": "Dr. Raj Patel",
-      "specialty": "Cardiologist",
-      "degree": "MBBS, DM (Cardio)", 
-      "experience": "15+ Years",
-      "about": "Dr. Raj Patel is a renowned Cardiologist specializing in interventional cardiology.",
-      "image": "https://randomuser.me/api/portraits/men/32.jpg",
-      "price": 599,
-      "rating": 4.9,
-      "durations": ["15 min", "45 min", "1 hr"]
-    },
-    {
-      "name": "Dr. Emily Chen",
-      "specialty": "Dermatologist",
-      "degree": "MBBS, MD (Derma)",
-      "experience": "5 Years",
-      "about": "Dr. Emily helps patients achieve healthy skin through personalized care.",
-      "image": "https://randomuser.me/api/portraits/women/44.jpg",
-      "price": 399,
-      "rating": 4.5,
-      "durations": ["10 min", "20 min"]
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _currentUserKey = prefs.getString("userKey");
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 1. FILTER LOGIC
-    final filteredDoctors = _doctors.where((doctor) {
-      final matchesFilter = _selectedFilter == "All" || doctor['specialty'] == _selectedFilter;
-      final searchLower = _searchQuery.toLowerCase();
-      final matchesSearch = doctor['name'].toString().toLowerCase().contains(searchLower) ||
-                            doctor['specialty'].toString().toLowerCase().contains(searchLower);
-      return matchesFilter && matchesSearch;
-    }).toList();
-
-    // 2. HEIGHT CALCULATION (Prevents Rendering Issues)
+    // Component height logic (Assuming parent handles safe area/bounds)
     double contentHeight = MediaQuery.of(context).size.height * 0.75;
 
-    // 3. MAIN UI (No Tabs)
     return SizedBox(
       height: contentHeight,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Search Bar
             TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
-                hintText: "Search doctor, specialty...",
+                hintText: "Search doctor...",
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 15),
 
-            // Filters
             HealthcareFilters(
               filters: _filters,
               selectedFilter: _selectedFilter,
@@ -99,16 +64,50 @@ class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
             ),
             const SizedBox(height: 20),
 
-            // Doctor List
             Expanded(
-              child: filteredDoctors.isEmpty
-                  ? const Center(child: Text("No doctors found."))
-                  : ListView.builder(
-                      itemCount: filteredDoctors.length,
-                      itemBuilder: (context, index) {
-                        return DoctorCard(doctor: filteredDoctors[index]);
-                      },
-                    ),
+              child: StreamBuilder(
+                stream: _dbRef.child("healthcare/users/providers").onValue,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) return const Center(child: Text("Something went wrong"));
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+                  if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+                    return const Center(child: Text("No doctors available."));
+                  }
+
+                  final dataMap = Map<dynamic, dynamic>.from(snapshot.data!.snapshot.value as Map);
+                  final List<Map<String, dynamic>> doctors = [];
+
+                  dataMap.forEach((key, value) {
+                    final doc = Map<String, dynamic>.from(value);
+                    doc['key'] = key; 
+                    
+                    String specialtyStr = "General";
+                    if (doc['specialties'] != null && (doc['specialties'] as List).isNotEmpty) {
+                      specialtyStr = (doc['specialties'] as List).first.toString();
+                    }
+                    doc['displaySpecialty'] = specialtyStr;
+
+                    final matchesFilter = _selectedFilter == "All" || specialtyStr == _selectedFilter;
+                    final matchesSearch = doc['firstName'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                                          specialtyStr.toLowerCase().contains(_searchQuery.toLowerCase());
+
+                    if (matchesFilter && matchesSearch) doctors.add(doc);
+                  });
+
+                  if (doctors.isEmpty) return const Center(child: Text("No doctors found."));
+
+                  return ListView.builder(
+                    itemCount: doctors.length,
+                    itemBuilder: (context, index) {
+                      return DoctorCard(
+                        doctor: doctors[index], 
+                        patientUserKey: _currentUserKey, 
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

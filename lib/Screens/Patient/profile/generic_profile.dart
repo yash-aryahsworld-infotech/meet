@@ -18,31 +18,41 @@ class GenericProfileForm extends StatefulWidget {
 
 class _GenericProfileFormState extends State<GenericProfileForm> {
   final _formKey = GlobalKey<FormState>();
-  
-  late TextEditingController nameCtrl; // Handles "first_name" or "name"
-  late TextEditingController lastNameCtrl; // Only for main user usually
+
+  // Text Controllers
+  late TextEditingController nameCtrl; 
+  late TextEditingController lastNameCtrl; 
   late TextEditingController phoneCtrl;
   late TextEditingController emailCtrl;
   late TextEditingController ageCtrl;
-  late TextEditingController genderCtrl;
-  late TextEditingController relationCtrl; // Only for family
+  late TextEditingController relationCtrl;
+  
+  // Dropdown State
+  String? _selectedGender;
+  final List<String> _genderOptions = ["Male", "Female", "Other"];
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with passed data
     final d = widget.initialData;
-    
-    // Normalize data: Main user has first/last, Family has 'name'
-    String combinedName = d['name'] ?? d['first_name'] ?? "";
-    
+
+    // 1. Initialize Text Controllers
+    String combinedName = d['name'] ?? d['firstName'] ?? "";
     nameCtrl = TextEditingController(text: combinedName);
-    lastNameCtrl = TextEditingController(text: d['last_name'] ?? "");
+    lastNameCtrl = TextEditingController(text: d['lastName'] ?? "");
     phoneCtrl = TextEditingController(text: d['phone'] ?? "");
     emailCtrl = TextEditingController(text: d['email'] ?? "");
     ageCtrl = TextEditingController(text: d['age']?.toString() ?? "");
-    genderCtrl = TextEditingController(text: d['gender'] ?? "");
     relationCtrl = TextEditingController(text: d['relation'] ?? "");
+
+    // 2. Initialize Gender Dropdown
+    // Check if the loaded gender matches one of our options
+    String? incomingGender = d['gender'];
+    if (incomingGender != null && _genderOptions.contains(incomingGender)) {
+      _selectedGender = incomingGender;
+    } else {
+      _selectedGender = null; // Default to null (shows "Select" hint)
+    }
   }
 
   @override
@@ -52,7 +62,6 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
     phoneCtrl.dispose();
     emailCtrl.dispose();
     ageCtrl.dispose();
-    genderCtrl.dispose();
     relationCtrl.dispose();
     super.dispose();
   }
@@ -62,13 +71,12 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
       final Map<String, dynamic> result = {
         "phone": phoneCtrl.text.trim(),
         "age": ageCtrl.text.trim(),
-        "gender": genderCtrl.text.trim(),
+        "gender": _selectedGender, // Taking value from Dropdown
       };
 
       if (widget.isMainUser) {
-        result["first_name"] = nameCtrl.text.trim();
-        result["last_name"] = lastNameCtrl.text.trim();
-        // Email usually not editable here, but added if needed
+        result["firstName"] = nameCtrl.text.trim();
+        result["lastName"] = lastNameCtrl.text.trim();
       } else {
         result["name"] = nameCtrl.text.trim();
         result["relation"] = relationCtrl.text.trim();
@@ -84,6 +92,7 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
       key: _formKey,
       child: Column(
         children: [
+          // --- Name Fields ---
           if (widget.isMainUser) ...[
             _buildField(nameCtrl, "First Name"),
             const SizedBox(height: 10),
@@ -91,24 +100,53 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
             const SizedBox(height: 10),
             _buildField(emailCtrl, "Email", readOnly: true),
           ] else ...[
-             _buildField(nameCtrl, "Full Name"),
-             const SizedBox(height: 10),
-             _buildField(relationCtrl, "Relation (e.g. Spouse)"),
+            _buildField(nameCtrl, "Full Name"),
+            const SizedBox(height: 10),
+            _buildField(relationCtrl, "Relation (e.g. Spouse)"),
           ],
 
           const SizedBox(height: 10),
           _buildField(phoneCtrl, "Phone"),
           const SizedBox(height: 10),
-          
+
+          // --- Age & Gender Row ---
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
-              Expanded(child: _buildField(ageCtrl, "Age")),
+              // Age Input
+              Expanded(
+                child: _buildField(ageCtrl, "Age"),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _buildField(genderCtrl, "Gender")),
+              
+              // Gender Dropdown
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: const InputDecoration(
+                    labelText: "Gender",
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  ),
+                  items: _genderOptions
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedGender = val;
+                    });
+                  },
+                  validator: (val) => val == null ? "Required" : null,
+                ),
+              ),
             ],
           ),
 
           const SizedBox(height: 20),
+          
+          // --- Save Button ---
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -123,6 +161,7 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
     );
   }
 
+  // Helper for standard Text Fields
   Widget _buildField(TextEditingController ctrl, String label, {bool readOnly = false}) {
     return TextFormField(
       controller: ctrl,

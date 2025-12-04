@@ -73,12 +73,15 @@ class ProfileSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarItem({
+ Widget _buildAvatarItem({
     required String name, 
     required bool isSelected, 
     required VoidCallback onTap, 
     required bool isMain
   }) {
+    // 1. URL Encode the name to handle spaces (e.g. "John Doe" -> "John%20Doe")
+    final String safeName = Uri.encodeComponent(name);
+    
     return Padding(
       padding: const EdgeInsets.only(right: 16.0),
       child: GestureDetector(
@@ -87,11 +90,10 @@ class ProfileSelector extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 300), // Smooth transition
+              duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                // This logic visually shows "Chosen" state
                 border: isSelected 
                     ? Border.all(color: Colors.teal, width: 3) 
                     : Border.all(color: Colors.transparent, width: 3),
@@ -99,7 +101,22 @@ class ProfileSelector extends StatelessWidget {
               child: CircleAvatar(
                 radius: 30,
                 backgroundColor: isMain ? Colors.teal[100] : Colors.orange[100],
-                backgroundImage: NetworkImage("https://ui-avatars.com/api/?name=$name&background=random"),
+                // 2. Add Text Child as a fallback if image fails to load
+                child: Text(
+                  isMain ? "Me" : name.isNotEmpty ? name[0].toUpperCase() : "?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isMain ? Colors.teal[900] : Colors.orange[900],
+                  ),
+                ),
+                // 3. Load Image over the text
+                foregroundImage: NetworkImage(
+                  "https://ui-avatars.com/api/?name=$safeName&background=random&size=128",
+                ),
+                // This handler prevents crashes if the image fails
+                onForegroundImageError: (_, __) {
+                  debugPrint("Could not load avatar for $name");
+                },
               ),
             ),
             const SizedBox(height: 8),

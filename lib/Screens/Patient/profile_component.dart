@@ -1,3 +1,4 @@
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,7 +33,7 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
     _loadData();
   }
 
-  // --- 1. Load Data (Updated to Fetch Selection) ---
+  // --- 1. Load Data ---
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     userKey = prefs.getString("userKey");
@@ -60,14 +61,22 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
         }
 
         // B. Restore Previous Selection
-        // We check if the backend has a saved selection key
         String? restoredKey;
         if (data.containsKey('selectedProfileKey')) {
           String savedKey = data['selectedProfileKey'];
-          // Validation: Ensure the saved family member actually still exists
-          bool memberExists = loadedFamily.any((m) => m['key'] == savedKey);
-          if (memberExists) {
-            restoredKey = savedKey;
+
+          // --- UPDATED LOGIC ---
+          // 1. If the saved key matches the logged-in userKey, it means "Main User" is selected.
+          //    We keep restoredKey as null (since null drives the Main User UI).
+          if (savedKey == userKey) {
+            restoredKey = null; 
+          } 
+          // 2. Otherwise, check if it matches a family member
+          else {
+            bool memberExists = loadedFamily.any((m) => m['key'] == savedKey);
+            if (memberExists) {
+              restoredKey = savedKey;
+            }
           }
         }
 
@@ -75,7 +84,7 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
           setState(() {
             mainProfileData = data;
             familyMembers = loadedFamily;
-            selectedFamilyKey = restoredKey; // <--- Set the restored selection
+            selectedFamilyKey = restoredKey;
             isLoading = false;
           });
         }
@@ -86,17 +95,21 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
     }
   }
 
-  // --- 2. Switch & Persist Selection (NEW) ---
+  // --- 2. Switch & Persist Selection (Updated) ---
   Future<void> _switchProfile(String? key) async {
-    // 1. Update UI immediately
+    // 1. Update UI immediately (Locally, null still means Main User)
     setState(() => selectedFamilyKey = key);
 
     // 2. Save choice to Firebase
-    // If key is null (Main User), we remove the field. 
-    // If key is String, we save it.
     if (key == null) {
-      await _dbRef.child("healthcare/users/patients/$userKey/selectedProfileKey").remove();
+      // --- UPDATED LOGIC ---
+      // If switching to Main User (null), store the actual userKey in DB 
+      // instead of removing the node.
+      if (userKey != null) {
+        await _dbRef.child("healthcare/users/patients/$userKey/selectedProfileKey").set(userKey);
+      }
     } else {
+      // If switching to Family Member, store their specific key
       await _dbRef.child("healthcare/users/patients/$userKey/selectedProfileKey").set(key);
     }
   }
@@ -111,10 +124,14 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
       updatedData['updatedAt'] = DateTime.now().toIso8601String();
       await _dbRef.child(path).update(updatedData);
       
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saved!")));
-      _loadData(); 
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saved!")));
+        _loadData(); 
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
     }
   }
 
@@ -126,8 +143,10 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
       builder: (_) => AddFamilySheet(
         onSave: (newData) async {
           await _dbRef.child("healthcare/users/patients/$userKey/family").push().set(newData);
-          Navigator.pop(context);
-          _loadData();
+          if (mounted) {
+            Navigator.pop(context);
+            _loadData();
+          }
         },
       ),
     );
@@ -154,7 +173,7 @@ class _PatientProfileManagerState extends State<PatientProfileManager> {
             mainUser: mainProfileData,
             familyMembers: familyMembers,
             selectedKey: selectedFamilyKey,
-            onSelect: _switchProfile, // <--- Now calls the persisting function
+            onSelect: _switchProfile, 
             onAddFamily: _openAddFamilySheet,
           ),
 
