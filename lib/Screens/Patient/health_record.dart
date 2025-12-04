@@ -248,7 +248,7 @@ class _HealthRecordState extends State<HealthRecord> {
       width: width,
       height: 48,
       child: DropdownButtonFormField<String>(
-        value: _selectedType,
+        initialValue: _selectedType,
         isExpanded: true,
         decoration: InputDecoration(
           filled: true,

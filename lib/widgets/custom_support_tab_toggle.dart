@@ -81,7 +81,7 @@ class _SupportTabsToggleState extends State<SupportTabsToggle> {
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -143,7 +143,7 @@ class _SupportTabsToggleState extends State<SupportTabsToggle> {
                           end: Alignment.centerLeft,
                           colors: [
                             const Color(0xFFF3F4F6), // Matches BG color (Solid)
-                            const Color(0xFFF3F4F6).withOpacity(0.0), // Transparent
+                            const Color(0xFFF3F4F6).withValues(alpha: 0.0), // Transparent
                           ],
                         ),
                       ),

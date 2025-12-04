@@ -86,17 +86,21 @@ class _ProfileSettingsState extends State<ProfileSettings> {
       }
     } catch (e) {
       setState(() => isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error loading profile: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading profile: $e")),
+        );
+      }
     }
   }
 
   Future<void> saveProfile() async {
     if (userKey == null || userRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("User Not Found")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("User Not Found")),
+        );
+      }
       return;
     }
 
@@ -117,13 +121,17 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     try {
       await _dbRef.child("healthcare/users/$userRole/$userKey").update(profileMap);
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Profile saved successfully")));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Profile saved successfully")));
+      }
 
       await _loadProfile();
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Failed to save profile: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Failed to save profile: $e")));
+      }
     }
   }
 
@@ -368,27 +376,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
     );
   }
 
-  Widget _inputField(String label, String placeholder, {int maxLines = 1}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        TextField(
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: placeholder,
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
   Widget _labeledMultilineField(String label, TextEditingController controller, int lines) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

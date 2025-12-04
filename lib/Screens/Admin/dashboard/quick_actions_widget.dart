@@ -13,7 +13,7 @@ class QuickActionItem {
 class QuickActionsWidget extends StatelessWidget {
   final List<QuickActionItem> actions;
 
-  const QuickActionsWidget({Key? key, required this.actions}) : super(key: key);
+  const QuickActionsWidget({super.key, required this.actions});
 
   @override
   Widget build(BuildContext context) {

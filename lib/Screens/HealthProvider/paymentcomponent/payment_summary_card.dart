@@ -41,7 +41,7 @@ class PaymentSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppResponsive.radiusMD),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.05),
+            color: Colors.black12.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),

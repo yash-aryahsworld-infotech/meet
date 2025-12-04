@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DemoDataPopulatorWidget extends StatelessWidget {
   final VoidCallback? onPopulate;
 
-  const DemoDataPopulatorWidget({Key? key, this.onPopulate}) : super(key: key);
+  const DemoDataPopulatorWidget({super.key, this.onPopulate});
 
   @override
   Widget build(BuildContext context) {

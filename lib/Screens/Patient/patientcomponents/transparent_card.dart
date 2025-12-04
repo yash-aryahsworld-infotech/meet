@@ -26,7 +26,7 @@ class TransparentCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         // Transparent white background
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: borderColor ?? Colors.grey.shade200,
@@ -34,7 +34,7 @@ class TransparentCard extends StatelessWidget {
         ),
         boxShadow: boxShadow ?? [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.02),
+            color: Colors.black12.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

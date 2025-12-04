@@ -29,6 +29,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     await Future.delayed(const Duration(seconds: 2));
 
+    if (!mounted) return;
+
     if (userFound == true && userKey != null && userKey.isNotEmpty) {
       Navigator.pushReplacement(
         context,

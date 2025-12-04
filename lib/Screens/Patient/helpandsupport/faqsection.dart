@@ -106,7 +106,7 @@ class _FaqSectionState extends State<FaqSection> {
         border: Border.all(color: _borderGrey),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -241,7 +241,7 @@ class _FaqSectionState extends State<FaqSection> {
               separatorBuilder: (c, i) => Divider(
                 height: 1,
                 thickness: 1,
-                color: _borderGrey.withOpacity(0.5),
+                color: _borderGrey.withValues(alpha: 0.5),
               ),
               itemBuilder: (context, index) {
                 return _buildExpansionTile(items[index]);

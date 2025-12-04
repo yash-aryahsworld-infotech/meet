@@ -27,7 +27,7 @@ class HealthWelcomeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppResponsive.radiusMD),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -69,7 +69,7 @@ class HealthWelcomeCard extends StatelessWidget {
                 Text(
                   "Your health journey continues with Mirai Health - स्वास्थ्य आपका, देखभाल हमारी",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: AppResponsive.fontSM(context), // Responsive Font
                     fontWeight: AppResponsive.regular,
                     height: 1.4, // Better line height for readability
@@ -90,7 +90,7 @@ class HealthWelcomeCard extends StatelessWidget {
               Text(
                 "Health Score",
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                   fontSize: AppResponsive.fontXS(context),
                   fontWeight: AppResponsive.medium,
                 ),
@@ -113,7 +113,7 @@ class HealthWelcomeCard extends StatelessWidget {
                   Text(
                     " /100",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: AppResponsive.fontSM(context),
                       fontWeight: AppResponsive.medium,
                     ),

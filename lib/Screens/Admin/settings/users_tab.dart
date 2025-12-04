@@ -41,8 +41,8 @@ class _NotificationSettingsCardState extends State<NotificationSettingsCard> {
                 Switch(
                   value: _enableSystemNotifications,
                   onChanged: (v) => setState(() => _enableSystemNotifications = v),
-                  activeColor: Colors.blue,
-                  activeTrackColor: Colors.blue.withOpacity(0.4),
+                  activeThumbColor: Colors.blue,
+                  activeTrackColor: Colors.blue.withValues(alpha: 0.4),
                 ),
               ],
             ),

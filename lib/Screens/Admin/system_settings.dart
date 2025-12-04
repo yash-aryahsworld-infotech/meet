@@ -7,7 +7,7 @@ import 'package:healthcare_plus/Screens/Admin/settings/users_tab.dart';
 // Adjust these import paths to match where you saved your files
 import 'package:healthcare_plus/widgets/custom_header.dart'; // Your PageHeader
 import 'package:healthcare_plus/widgets/custom_support_tab_toggle.dart';
-import '../../widgets/switch_on_off.dart'; // Your Switch Component
+// Your Switch Component
 
 class SystemSettingsPage extends StatefulWidget {
   const SystemSettingsPage({super.key});

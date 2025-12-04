@@ -28,7 +28,7 @@ class InfoCard extends StatelessWidget {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: accentColor.withOpacity(0.3),
+          color: accentColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -83,7 +83,7 @@ class InfoCard extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                color: accentColor.withOpacity(0.9), // Slightly softer text
+                color: accentColor.withValues(alpha: 0.9), // Slightly softer text
                 fontSize: 13,
                 height: 1.4,
               ),

@@ -29,7 +29,7 @@ class PaymentLinksComponent extends StatelessWidget {
               // NEW → BUTTON TEXT + ACTION PASSED FROM PARENT
               buttonText: "Generate Payment Link",
               onButtonPressed: () {
-                print("Payment link generated!");
+                // Payment link generated
               },
             ),
           ],

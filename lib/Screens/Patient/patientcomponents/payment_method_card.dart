@@ -35,13 +35,13 @@ class PaymentMethodCard extends StatelessWidget {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: const Color(0xFF3B82F6).withOpacity(0.15),
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               )
             else
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

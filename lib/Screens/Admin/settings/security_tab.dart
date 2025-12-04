@@ -103,8 +103,8 @@ class _SecuritySettingsCardState extends State<SecuritySettingsCard> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.blue,
-            activeTrackColor: Colors.blue.withOpacity(0.4),
+            activeThumbColor: Colors.blue,
+            activeTrackColor: Colors.blue.withValues(alpha: 0.4),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey.shade200,
           ),

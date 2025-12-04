@@ -73,7 +73,7 @@ class AppointmentCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -91,14 +91,14 @@ class AppointmentCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.blue.shade50,
-                  // The child (Icon) shows if image is null or fails to load
-                  child: const Icon(Icons.person, color: Colors.blue, size: 30),
                   // foregroundImage sits on top of child.
                   foregroundImage: imgProvider,
                   onForegroundImageError: (exception, stackTrace) {
                     // This callback catches 404s or invalid assets, 
                     // preventing the app from crashing and letting the child Icon show.
                   },
+                  // The child (Icon) shows if image is null or fails to load
+                  child: const Icon(Icons.person, color: Colors.blue, size: 30),
                 ),
                 
                 const SizedBox(width: 16),

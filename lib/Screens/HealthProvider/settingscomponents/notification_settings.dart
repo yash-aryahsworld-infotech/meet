@@ -172,7 +172,7 @@ Align(
 
         // RIGHT SIDE SWITCH
         Switch(
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: Colors.blue,
           value: value,
           onChanged: onChanged,

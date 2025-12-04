@@ -92,6 +92,8 @@ class _SignInFormState extends State<SignInForm> {
       await prefs.setString("userRole", finalRole!); // patients/providers/corporate
       await prefs.setBool("userFound", true);
 
+      if (!mounted) return;
+
       // Navigate to dashboard
       Navigator.pushReplacement(
         context,

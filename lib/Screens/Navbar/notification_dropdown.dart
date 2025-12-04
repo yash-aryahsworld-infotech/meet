@@ -62,7 +62,6 @@ class NotificationDropdown extends StatelessWidget {
                     color: Colors.blue,
                     onTap: () {
                        // Handle click for appointment
-                       print("Clicked Appointment");
                     },
                   ),
                   _buildNotificationItem(
@@ -141,7 +140,7 @@ class NotificationDropdown extends StatelessWidget {
     return InkWell(
       onTap: onTap, // Handle the tap
       child: Container(
-        color: isUnread ? Colors.blue.withOpacity(0.05) : Colors.transparent,
+        color: isUnread ? Colors.blue.withValues(alpha: 0.05) : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +148,7 @@ class NotificationDropdown extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 20, color: color),

@@ -21,7 +21,7 @@ class ActivityItem {
 class RecentActivitiesWidget extends StatelessWidget {
   final List<ActivityItem> activities;
 
-  const RecentActivitiesWidget({Key? key, required this.activities}) : super(key: key);
+  const RecentActivitiesWidget({super.key, required this.activities});
 
   @override
   Widget build(BuildContext context) {

@@ -133,7 +133,7 @@ class _PediatricSectionState extends State<PediatricSection> {
               border: Border.all(color: Colors.grey.shade300),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.05),
+                  color: Colors.grey.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -287,7 +287,7 @@ class _PediatricSectionState extends State<PediatricSection> {
         border: Border.all(color: Colors.blue.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.05),
+            color: Colors.blue.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

@@ -14,7 +14,7 @@ class BarDataPoint {
 class WeeklyAppointmentBarChart extends StatelessWidget {
   final List<BarDataPoint> data;
 
-  const WeeklyAppointmentBarChart({Key? key, required this.data}) : super(key: key);
+  const WeeklyAppointmentBarChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +47,12 @@ class WeeklyAppointmentBarChart extends StatelessWidget {
                     show: true,
                     drawVerticalLine: true,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.grey.withValues(alpha: 0.2),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                     ),
                     getDrawingVerticalLine: (value) => FlLine(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.grey.withValues(alpha: 0.2),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                     ),

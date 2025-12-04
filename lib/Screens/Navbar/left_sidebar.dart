@@ -49,6 +49,8 @@ class PerfectSidebar extends StatelessWidget {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
 
+                if (!context.mounted) return;
+
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const AuthPage()),
@@ -235,7 +237,7 @@ class PerfectSidebar extends StatelessWidget {
                         );
                       }).toList(),
                       onChanged: (newRole) {
-                        print("Role changed to: $userRole");
+                        // Role changed to: $userRole
                       },
                     ),
                   ),

@@ -36,7 +36,7 @@ class VerticalStatCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.03),
+            color: Colors.black12.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -49,7 +49,7 @@ class VerticalStatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.08),
+              color: iconColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: iconSize, color: iconColor),

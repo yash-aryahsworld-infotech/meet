@@ -85,7 +85,7 @@ class _UploadDocumentsState extends State<UploadDocuments> {
         border: Border.all(color: _kBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -210,7 +210,7 @@ class _UploadDocumentsState extends State<UploadDocuments> {
 
   Widget _buildDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       decoration: _inputDeco("Select category"),
       icon: const Icon(Icons.keyboard_arrow_down),
       items: ["Lab Report", "Prescription", "Scan", "Invoice"]
