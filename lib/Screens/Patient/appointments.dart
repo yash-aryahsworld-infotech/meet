@@ -1,9 +1,10 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:healthcare_plus/widgets/custom_header.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import './appointment/appointment_card.dart';
-import '../../widgets/custom_tab.dart';
+import 'package:healthcare_plus/Screens/Patient/appointment/appointment_card.dart';
+import 'package:healthcare_plus/widgets/custom_header.dart';
+import 'package:healthcare_plus/widgets/custom_tab.dart';
 
 class Appointments extends StatefulWidget {
   const Appointments({super.key});
@@ -16,6 +17,8 @@ class _AppointmentsState extends State<Appointments> {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
   String? _currentUserKey;
   int _selectedTab = 0;
+  bool _isLoading = true;
+  String? _patientId;
 
   final List<String> _tabs = [
     "Upcoming",
@@ -23,89 +26,185 @@ class _AppointmentsState extends State<Appointments> {
     "Calendar View",
   ];
 
+  List<Map<String, dynamic>> _upcomingAppointments = [];
+  List<Map<String, dynamic>> _pastAppointments = [];
+  
+  DatabaseReference? _appointmentsRef;
+
   @override
   void initState() {
     super.initState();
-    _loadCurrentUser();
+    _loadAppointments();
   }
 
-  Future<void> _loadCurrentUser() async {
+  @override
+  void dispose() {
+    _appointmentsRef?.onValue.drain();
+    super.dispose();
+  }
+
+  Future<void> _loadAppointments() async {
+    setState(() => _isLoading = true);
+
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _currentUserKey = prefs.getString("userKey");
-      });
+    _patientId = prefs.getString("userKey");
+
+    if (_patientId == null || _patientId!.isEmpty) {
+      setState(() => _isLoading = false);
+      return;
     }
+
+    _setupRealtimeListener();
   }
 
-  // --- Backend: Date Helper ---
-  DateTime _parseDate(String dateStr) {
-    try {
-      return DateTime.parse(dateStr);
-    } catch (e) {
-      return DateTime.now();
-    }
-  }
-
-  // --- Backend: Cancel Appointment (UPDATED for Flat Structure) ---
-  Future<void> _handleCancel(Map<String, dynamic> appointment) async {
-    if (_currentUserKey == null) return;
-
-    // Extract necessary IDs
-    final String bookingId = appointment['id']; // This is the ID in all_appointments
-    final String doctorId = appointment['doctorId'] ?? ""; 
-    final String date = appointment['date'];
-    final String time = appointment['time'];
-
-    try {
-      // 1. Remove from Master List (all_appointments)
-      await _dbRef.child("healthcare/all_appointments/$bookingId").remove();
-
-      // 2. Free up the slot in the Availability Checker
-      if (doctorId.isNotEmpty && date.isNotEmpty && time.isNotEmpty) {
-        await _dbRef.child("healthcare/booked_slots/$doctorId/$date/$time").remove();
+  void _setupRealtimeListener() {
+    _appointmentsRef = FirebaseDatabase.instance.ref("healthcare/all_appointments");
+    
+    _appointmentsRef!.onValue.listen((event) {
+      if (!mounted) return;
+      
+      if (!event.snapshot.exists) {
+        setState(() {
+          _upcomingAppointments = [];
+          _pastAppointments = [];
+          _isLoading = false;
+        });
+        return;
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Appointment cancelled"), backgroundColor: Colors.redAccent),
+      _processAppointments(event.snapshot);
+    });
+  }
+
+  Future<void> _processAppointments(DataSnapshot snapshot) async {
+    try {
+      final appointmentsData = snapshot.value as Map<dynamic, dynamic>;
+      final upcoming = <Map<String, dynamic>>[];
+      final past = <Map<String, dynamic>>[];
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      for (var entry in appointmentsData.entries) {
+        final appointmentData = entry.value as Map<dynamic, dynamic>;
+        final patientId = appointmentData['patientId']?.toString() ?? "";
+        
+        if (patientId != _patientId) continue;
+        
+        // Get status
+        final status = appointmentData['status']?.toString() ?? "";
+
+        // Get doctor details
+        final doctorId = appointmentData['doctorId']?.toString() ?? "";
+        String doctorName = appointmentData['doctorName']?.toString() ?? "Unknown Doctor";
+        String specialty = appointmentData['specialty']?.toString() ?? "Specialist";
+        
+        // Parse appointment date
+        final dateStr = appointmentData['date']?.toString() ?? "";
+        DateTime? appointmentDate;
+        
+        if (dateStr.isNotEmpty) {
+          try {
+            appointmentDate = DateTime.parse(dateStr);
+          } catch (e) {
+            // Try timestamp if date parsing fails
+            if (appointmentData['timestamp'] != null) {
+              final timestamp = appointmentData['timestamp'];
+              appointmentDate = DateTime.fromMillisecondsSinceEpoch(
+                timestamp is int ? timestamp : int.parse(timestamp.toString())
+              );
+            }
+          }
+        }
+
+        if (appointmentDate == null) continue;
+
+        final appointmentDay = DateTime(
+          appointmentDate.year,
+          appointmentDate.month,
+          appointmentDate.day,
         );
+
+        final isCancelled = status == 'cancelled';
+        final isUpcoming = !isCancelled && (appointmentDay.isAtSameMomentAs(today) || appointmentDay.isAfter(today));
+
+        final appointment = {
+          "appointmentId": appointmentData['appointmentId']?.toString() ?? entry.key,
+          "name": doctorName,
+          "specialty": specialty,
+          "image": "",
+          "type": appointmentData['type']?.toString().capitalize() ?? "Clinic",
+          "date": _formatDate(appointmentDate),
+          "time": appointmentData['time']?.toString() ?? "",
+          "isUpcoming": isUpcoming,
+          "patientId": _patientId,
+          "patientName": appointmentData['patientName']?.toString() ?? "",
+          "doctorId": doctorId,
+          "status": status,
+          "cancellationReason": appointmentData['cancellationReason']?.toString() ?? "",
+          "cancelledBy": appointmentData['cancelledBy']?.toString() ?? "",
+          "cancelledAt": appointmentData['cancelledAt']?.toString() ?? "",
+        };
+
+        // Cancelled appointments always go to past
+        if (isCancelled) {
+          past.add(appointment);
+        } else if (isUpcoming) {
+          upcoming.add(appointment);
+        } else {
+          past.add(appointment);
+        }
+      }
+
+      // Sort by date
+      upcoming.sort((a, b) => _compareDates(a["date"], b["date"]));
+      past.sort((a, b) => _compareDates(b["date"], a["date"]));
+
+      if (mounted) {
+        setState(() {
+          _upcomingAppointments = upcoming;
+          _pastAppointments = past;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  // --- UI: Confirmation Dialog ---
-  void _showCancelDialog(Map<String, dynamic> appointment) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Cancel Appointment?"),
-        content: const Text("This slot will be freed up for other patients."),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Keep")),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _handleCancel(appointment);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text("Confirm Cancel"),
-          ),
-        ],
-      ),
-    );
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final appointmentDay = DateTime(date.year, date.month, date.day);
+
+    if (appointmentDay == today) {
+      return "Today";
+    } else if (appointmentDay == tomorrow) {
+      return "Tomorrow";
+    } else if (appointmentDay == today.subtract(const Duration(days: 1))) {
+      return "Yesterday";
+    } else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return "${months[date.month - 1]} ${date.day}, ${date.year}";
+    }
+  }
+
+  int _compareDates(String date1, String date2) {
+    // Simple comparison, can be enhanced
+    return date1.compareTo(date2);
   }
 
   @override
   Widget build(BuildContext context) {
     const double pageMaxWidth = 1200;
 
-    if (_currentUserKey == null) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading) {
+      return Material(
+        color: Colors.grey.shade50,
+        child: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     return Material(
@@ -269,45 +368,9 @@ class _AppointmentsState extends State<Appointments> {
 // REUSABLE WIDGETS
 // ---------------------------------------------------------
 
-class AppointmentList extends StatelessWidget {
-  final List<Map<String, dynamic>> appointments;
-  final String emptyMsg;
-  final Function(Map<String, dynamic>)? onCancel; 
-
-  const AppointmentList({
-    super.key,
-    required this.appointments,
-    required this.emptyMsg,
-    this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (appointments.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 60),
-          child: Column(
-            children: [
-              Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
-              const SizedBox(height: 16),
-              Text(emptyMsg, style: TextStyle(fontSize: 16, color: Colors.grey.shade500)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: appointments.length,
-      itemBuilder: (context, index) {
-        return AppointmentCard(
-          appointment: appointments[index],
-          onCancel: onCancel != null ? () => onCancel!(appointments[index]) : null,
-        );
-      },
-    );
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

@@ -101,14 +101,6 @@ class ProfileSelector extends StatelessWidget {
               child: CircleAvatar(
                 radius: 30,
                 backgroundColor: isMain ? Colors.teal[100] : Colors.orange[100],
-                // 2. Add Text Child as a fallback if image fails to load
-                child: Text(
-                  isMain ? "Me" : name.isNotEmpty ? name[0].toUpperCase() : "?",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isMain ? Colors.teal[900] : Colors.orange[900],
-                  ),
-                ),
                 // 3. Load Image over the text
                 foregroundImage: NetworkImage(
                   "https://ui-avatars.com/api/?name=$safeName&background=random&size=128",
@@ -117,6 +109,14 @@ class ProfileSelector extends StatelessWidget {
                 onForegroundImageError: (_, __) {
                   debugPrint("Could not load avatar for $name");
                 },
+                // 2. Add Text Child as a fallback if image fails to load
+                child: Text(
+                  isMain ? "Me" : name.isNotEmpty ? name[0].toUpperCase() : "?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isMain ? Colors.teal[900] : Colors.orange[900],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),

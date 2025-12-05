@@ -37,6 +37,7 @@ import '../Corporate/programs_page.dart';
 import '../Corporate/settings_page.dart';
 import '../Patient/book_consultation.dart';
 import '../Patient/patient_dashboard.dart';
+import '../Patient/profile_component.dart';
 
 /// Dynamic Sidebar model and role-based lists.
 /// Edit these arrays to change icons, titles, routes and notification counts.

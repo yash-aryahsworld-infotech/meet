@@ -27,43 +27,33 @@ class DoctorDetailsPage extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // --- 1. Custom Header (Instead of AppBar) ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-              child: Row(
+            // --- 1. PROFILE HEADER ---
+            Center(
+              child: Column(
                 children: [
-                  const BackButton(),
-                  const Text("Doctor Details", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  Hero(
+                    tag: 'doctor_${doctor['userKey'] ?? doctor['id'] ?? doctor['name']}_${doctor['image']}', // Unique tag matching card
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage: _getImageProvider(doctor['image']),
+                      backgroundColor: Colors.blue.shade50,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    doctor['name'],
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "${doctor['degree']} - ${doctor['specialty']}",
+                    style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-
-            // --- 2. Scrollable Body ---
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 10),
-                          Hero(
-                            tag: doctor['image'] ?? "hero_tag",
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundImage: _getImageProvider(doctor['image'] ?? ""),
-                              backgroundColor: Colors.blue.shade50,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          Text(fullName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 5),
-                          Text(specialty, style: TextStyle(color: Colors.grey[700], fontSize: 16)),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
 
                     // Stats
                     Container(

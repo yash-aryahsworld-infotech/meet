@@ -28,40 +28,72 @@ class DoctorCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundImage: imageProvider,
-                  backgroundColor: Colors.blue.shade100,
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(fullName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text(specialty, style: TextStyle(color: Colors.blue.shade700, fontSize: 13, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.work_outline, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text("$exp Years Exp", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+            // --- CLICKABLE PROFILE SECTION ---
+            GestureDetector(
+              onTap: () {
+                // Navigate to Details Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DoctorDetailsPage(doctor: doctor)),
+                );
+              },
+              child: Container(
+                color: Colors.transparent, // Ensures click area covers empty space
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("₹$fee", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-                    const Text("per session", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    // Profile Image
+                    Hero(
+                      tag: doctor['image'], // Animation Tag
+                      child: CircleAvatar(
+                        radius: 32,
+                        backgroundImage: _getImageProvider(doctor['image']),
+                        backgroundColor: Colors.blue.shade100,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    
+                    // Info Section
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(doctor['name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          
+                          // --- ADDED DEGREE HERE ---
+                          Text(
+                            doctor['degree'], 
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)
+                          ),
+
+                          Text(doctor['specialty'], style: TextStyle(color: Colors.blue.shade700, fontSize: 13, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.work_outline, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text("${doctor['experience']} Exp", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              const Padding(padding: EdgeInsets.symmetric(horizontal: 6.0), child: Icon(Icons.circle, size: 4, color: Colors.grey)),
+                              const Icon(Icons.star, color: Colors.amber, size: 14),
+                              const SizedBox(width: 2),
+                              Text("${doctor['rating']}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                    
+                    // Price Section (Not clickable for details, just visual)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text("₹${doctor['price']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                        const Text("per session", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 15),
             const Divider(height: 1),

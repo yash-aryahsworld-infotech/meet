@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:healthcare_plus/utils/app_responsive.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class UploadDocuments extends StatefulWidget {
-  const UploadDocuments({super.key});
+  final String? appointmentId; // Optional: if null, shows all documents
+  final String? doctorName;
+
+  const UploadDocuments({
+    super.key,
+    this.appointmentId,
+    this.doctorName,
+  });
 
   @override
   State<UploadDocuments> createState() => _UploadDocumentsState();
@@ -13,11 +26,101 @@ class _UploadDocumentsState extends State<UploadDocuments> {
   final _descriptionController = TextEditingController();
   final _dateController = TextEditingController();
   String? _selectedCategory;
+  
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final ImagePicker _imagePicker = ImagePicker();
+  
+  List<DocumentModel> _documents = [];
+  bool _isLoading = true;
+  bool _isUploading = false;
+  String? _patientId;
+  String? _patientName;
 
   static const _kPrimary = Color(0xFF3B82F6);
   static const _kTextDark = Color(0xFF1F2937);
   static const _kTextGrey = Color(0xFF6B7280);
   static const _kBorder = Color(0xFFE5E7EB);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+    _loadDocuments();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _patientId = prefs.getString("userKey");
+      _patientName = prefs.getString("firstName") ?? "Patient";
+    });
+  }
+
+  void _loadDocuments() {
+    if (widget.appointmentId != null) {
+      // Load documents for specific appointment
+      _database
+          .child('healthcare/appointments/${widget.appointmentId}/documents')
+          .onValue
+          .listen((event) {
+        _updateDocumentsList(event);
+      });
+    } else {
+      // Load all documents for this patient
+      _database.child('healthcare/appointments').onValue.listen((event) {
+        if (!mounted) return;
+        
+        final allDocs = <DocumentModel>[];
+        if (event.snapshot.exists) {
+          final appointments = event.snapshot.value as Map<dynamic, dynamic>;
+          appointments.forEach((appointmentId, appointmentData) {
+            final appointment = appointmentData as Map<dynamic, dynamic>;
+            if (appointment['documents'] != null) {
+              final docs = appointment['documents'] as Map<dynamic, dynamic>;
+              docs.forEach((docId, docData) {
+                final docMap = docData as Map<dynamic, dynamic>;
+                if (docMap['uploadedBy'] == _patientId) {
+                  allDocs.add(DocumentModel.fromMap(docId, docMap));
+                }
+              });
+            }
+          });
+        }
+        
+        allDocs.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+        setState(() {
+          _documents = allDocs;
+          _isLoading = false;
+        });
+      });
+    }
+  }
+
+  void _updateDocumentsList(DatabaseEvent event) {
+    if (!mounted) return;
+
+    if (event.snapshot.exists) {
+      final docsData = event.snapshot.value as Map<dynamic, dynamic>;
+      final docs = <DocumentModel>[];
+
+      docsData.forEach((key, value) {
+        final docMap = value as Map<dynamic, dynamic>;
+        docs.add(DocumentModel.fromMap(key, docMap));
+      });
+
+      docs.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+
+      setState(() {
+        _documents = docs;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _documents = [];
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,11 +361,14 @@ class _UploadDocumentsState extends State<UploadDocuments> {
       ),
       child: Column(
         children: [
-          Icon(Icons.upload_file_outlined, size: 40, color: Colors.grey[400]),
+          if (_isUploading)
+            const CircularProgressIndicator()
+          else
+            Icon(Icons.upload_file_outlined, size: 40, color: Colors.grey[400]),
           const SizedBox(height: 12),
-          const Text(
-            "Upload Medical Documents",
-            style: TextStyle(
+          Text(
+            _isUploading ? "Uploading..." : "Upload Medical Documents",
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: _kTextDark,
               fontSize: 16,
@@ -270,25 +376,159 @@ class _UploadDocumentsState extends State<UploadDocuments> {
           ),
           const SizedBox(height: 4),
           const Text(
-            "Drag & drop or click to browse",
+            "Select files to upload",
             style: TextStyle(color: _kTextGrey, fontSize: 14),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kPrimary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _isUploading ? null : _pickImage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.image, size: 18),
+                label: const Text("Image"),
               ),
-            ),
-            child: const Text("Select Files"),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _isUploading ? null : _pickDocument,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kPrimary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.file_present, size: 18),
+                label: const Text("Document"),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (image == null) return;
+      await _uploadFile(File(image.path), 'image', image.name);
+    } catch (e) {
+      _showError("Failed to pick image: $e");
+    }
+  }
+
+  Future<void> _pickDocument() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'dcm', 'dicom', 'nii', 'nifti', 'zip'],
+      );
+
+      if (result == null) return;
+
+      final file = File(result.files.single.path!);
+      final fileName = result.files.single.name;
+      final extension = fileName.split('.').last.toLowerCase();
+
+      String fileType = 'document';
+      if (extension == 'pdf') {
+        fileType = 'pdf';
+      } else if (['dcm', 'dicom', 'nii', 'nifti'].contains(extension)) {
+        fileType = 'medical_imaging';
+      }
+
+      await _uploadFile(file, fileType, fileName);
+    } catch (e) {
+      _showError("Failed to pick file: $e");
+    }
+  }
+
+  Future<void> _uploadFile(File file, String fileType, String fileName) async {
+    if (widget.appointmentId == null) {
+      _showError("Please select an appointment first");
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      // Check file size
+      final fileSize = await file.length();
+      final fileSizeMB = fileSize / (1024 * 1024);
+
+      if (fileType == 'image' && fileSizeMB > 10) {
+        _showError("Image too large (max 10MB)");
+        setState(() => _isUploading = false);
+        return;
+      } else if (fileSizeMB > 20) {
+        _showError("File too large (max 20MB)");
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'healthcare/documents/${widget.appointmentId}/${DateTime.now().millisecondsSinceEpoch}_$fileName');
+
+      await storageRef.putFile(file);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save metadata to Realtime Database
+      final docRef = _database
+          .child('healthcare/appointments/${widget.appointmentId}/documents')
+          .push();
+
+      await docRef.set({
+        'fileName': fileName,
+        'fileUrl': downloadUrl,
+        'fileType': fileType,
+        'uploadedBy': _patientId,
+        'uploaderName': _patientName,
+        'uploadedAt': ServerValue.timestamp,
+        'fileSize': fileSize,
+        'category': _selectedCategory ?? 'Other',
+        'provider': _providerController.text,
+        'description': _descriptionController.text,
+        'date': _dateController.text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Document uploaded successfully")),
+        );
+        // Clear form
+        _providerController.clear();
+        _descriptionController.clear();
+        _dateController.clear();
+        setState(() => _selectedCategory = null);
+      }
+    } catch (e) {
+      _showError("Upload failed: $e");
+    } finally {
+      setState(() => _isUploading = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   Widget _buildFooterNotes() {
@@ -319,15 +559,27 @@ class _UploadDocumentsState extends State<UploadDocuments> {
 
   Widget _buildDocumentList(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 600;
+    
+    if (_isLoading) {
+      return _cardshell(
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return _cardshell(
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Your Documents (1)",
-                style: TextStyle(
+              Text(
+                "Your Documents (${_documents.length})",
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: _kTextDark,
@@ -341,7 +593,19 @@ class _UploadDocumentsState extends State<UploadDocuments> {
             Align(alignment: Alignment.centerLeft, child: _buildBadge()),
           ],
           const SizedBox(height: 16),
-          _buildListItem(context),
+          if (_documents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Text(
+                "No documents uploaded yet",
+                style: TextStyle(color: _kTextGrey),
+              ),
+            )
+          else
+            ..._documents.map((doc) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildListItem(context, doc),
+                )),
         ],
       ),
     );
@@ -365,7 +629,30 @@ class _UploadDocumentsState extends State<UploadDocuments> {
     );
   }
 
-  Widget _buildListItem(BuildContext context) {
+  Widget _buildListItem(BuildContext context, DocumentModel doc) {
+    IconData icon;
+    Color iconColor;
+
+    switch (doc.fileType) {
+      case 'image':
+        icon = Icons.image;
+        iconColor = Colors.blue;
+        break;
+      case 'pdf':
+        icon = Icons.picture_as_pdf;
+        iconColor = Colors.red;
+        break;
+      case 'medical_imaging':
+        icon = Icons.medical_information;
+        iconColor = Colors.purple;
+        break;
+      default:
+        icon = Icons.description;
+        iconColor = Colors.orange;
+    }
+
+    final fileSizeMB = (doc.fileSize / (1024 * 1024)).toStringAsFixed(2);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -380,51 +667,29 @@ class _UploadDocumentsState extends State<UploadDocuments> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.green.withAlpha(25),
+                  color: iconColor.withAlpha(25),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.science_outlined, color: Colors.green),
+                child: Icon(icon, color: iconColor),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      children: [
-                        const Text(
-                          "blood_test_results.pdf",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withAlpha(  25),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            "completed",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      doc.fileName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      "Lab Report • 2.34 MB • 22/11/2025",
-                      style: TextStyle(color: _kTextGrey, fontSize: 12),
+                    Text(
+                      "${doc.category} • $fileSizeMB MB • ${_formatDate(doc.uploadedAt)}",
+                      style: const TextStyle(color: _kTextGrey, fontSize: 12),
                     ),
                   ],
                 ),
@@ -435,22 +700,74 @@ class _UploadDocumentsState extends State<UploadDocuments> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => _openDocument(doc.fileUrl),
                 icon: const Icon(Icons.visibility_outlined, color: _kTextGrey),
+                tooltip: "View",
               ),
               IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.download_outlined, color: _kTextGrey),
-              ),
-              IconButton(
-                onPressed: () {},
+                onPressed: () => _deleteDocument(doc),
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                tooltip: "Delete",
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openDocument(String url) async {
+    // Open URL in browser/viewer
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Opening document...")),
+      );
+    }
+  }
+
+  Future<void> _deleteDocument(DocumentModel doc) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Document"),
+        content: const Text("Are you sure you want to delete this document?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // Delete from Storage
+      await FirebaseStorage.instance.refFromURL(doc.fileUrl).delete();
+
+      // Delete from Database
+      await _database
+          .child('healthcare/appointments/${widget.appointmentId}/documents/${doc.id}')
+          .remove();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Document deleted")),
+        );
+      }
+    } catch (e) {
+      _showError("Failed to delete: $e");
+    }
+  }
+
+  String _formatDate(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    return "${date.day}/${date.month}/${date.year}";
   }
 
   // --- SECURITY SECTION ---
@@ -512,6 +829,45 @@ class _UploadDocumentsState extends State<UploadDocuments> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+class DocumentModel {
+  final String id;
+  final String fileName;
+  final String fileUrl;
+  final String fileType;
+  final String uploadedBy;
+  final String uploaderName;
+  final int uploadedAt;
+  final int fileSize;
+  final String category;
+
+  DocumentModel({
+    required this.id,
+    required this.fileName,
+    required this.fileUrl,
+    required this.fileType,
+    required this.uploadedBy,
+    required this.uploaderName,
+    required this.uploadedAt,
+    required this.fileSize,
+    required this.category,
+  });
+
+  factory DocumentModel.fromMap(String id, Map<dynamic, dynamic> map) {
+    return DocumentModel(
+      id: id,
+      fileName: map['fileName']?.toString() ?? '',
+      fileUrl: map['fileUrl']?.toString() ?? '',
+      fileType: map['fileType']?.toString() ?? 'document',
+      uploadedBy: map['uploadedBy']?.toString() ?? '',
+      uploaderName: map['uploaderName']?.toString() ?? '',
+      uploadedAt: map['uploadedAt'] as int? ?? 0,
+      fileSize: map['fileSize'] as int? ?? 0,
+      category: map['category']?.toString() ?? 'Other',
     );
   }
 }

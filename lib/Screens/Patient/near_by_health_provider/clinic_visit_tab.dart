@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import this
+import 'package:firebase_database/firebase_database.dart';
 import './healthcare_filters.dart';
 import './doctor_details_page.dart';
-import './booking_bottom_sheet.dart'; 
+import './booking_bottom_sheet.dart';
 
 class ClinicVisitPage extends StatefulWidget {
   const ClinicVisitPage({super.key});
@@ -14,54 +14,113 @@ class ClinicVisitPage extends StatefulWidget {
 class _ClinicVisitPageState extends State<ClinicVisitPage> {
   String _selectedFilter = "All";
   String _searchQuery = "";
-  String? _currentUserKey; // Store user key here
-
-  final List<String> _filters = ["All", "General Physician", "Dentist", "Cardiologist", "Orthopedic"];
-
-  // Mock Data (Must include 'key' for booking logic to work, even if fake)
-  final List<Map<String, dynamic>> _clinicDoctors = [
-    {
-      "key": "dummy_doc_1", // Required for booking
-      "name": "Dr. Amit Verma",
-      "degree": "MBBS, MD",
-      "specialty": "General Physician",
-      "experience": "12 Years",
-      "about": "Senior physician specializing in diabetes.",
-      "address": "Sunshine Clinic, Andheri West",
-      "phone": "9876543210",
-      "image": "https://randomuser.me/api/portraits/men/32.jpg",
-      "price": 500,
-      "rating": 4.7,
-      "distance": "1.2 km"
-    },
-    {
-      "key": "dummy_doc_2",
-      "name": "Dr. Sneha Kapoor",
-      "degree": "BDS, MDS",
-      "specialty": "Dentist",
-      "experience": "8 Years",
-      "about": "Specializes in cosmetic dentistry.",
-      "address": "Smile Care, Bandra",
-      "phone": "9876543211",
-      "image": "https://randomuser.me/api/portraits/women/44.jpg",
-      "price": 800,
-      "rating": 4.9,
-      "distance": "3.5 km"
-    },
-  ];
+  bool _isLoading = true;
+  
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  List<String> _filters = ["All"];
+  List<Map<String, dynamic>> _clinicDoctors = [];
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUser();
+    _loadDoctors();
   }
 
-  Future<void> _loadCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _currentUserKey = prefs.getString("userKey");
+  Future<void> _loadDoctors() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final snapshot = await _database.child('healthcare/users/providers').get();
+
+      if (!snapshot.exists) {
+        setState(() {
+          _clinicDoctors = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final providersData = snapshot.value as Map<dynamic, dynamic>;
+      final loadedDoctors = <Map<String, dynamic>>[];
+      final specialtiesSet = <String>{'All'};
+
+      providersData.forEach((key, value) {
+        final doctor = value as Map<dynamic, dynamic>;
+        
+        final firstName = doctor['firstName']?.toString() ?? '';
+        final lastName = doctor['lastName']?.toString() ?? '';
+        final name = 'Dr. $firstName $lastName'.trim();
+        
+        final specialties = doctor['specialties'];
+        String specialty = 'General Physician';
+        if (specialties != null) {
+          if (specialties is List && specialties.isNotEmpty) {
+            specialty = specialties[0].toString();
+            for (var spec in specialties) {
+              specialtiesSet.add(spec.toString());
+            }
+          } else if (specialties is String) {
+            specialty = specialties;
+            specialtiesSet.add(specialty);
+          }
+        }
+
+        // Get languages
+        final languages = doctor['languages'];
+        List<String> languagesList = [];
+        if (languages != null) {
+          if (languages is List) {
+            languagesList = languages.map((e) => e.toString()).toList();
+          } else if (languages is Map) {
+            // Firebase sometimes returns arrays as maps with numeric keys
+            languagesList = languages.values.map((e) => e.toString()).toList();
+          } else if (languages is String) {
+            languagesList = [languages];
+          }
+        }
+
+        loadedDoctors.add({
+          'userKey': key,
+          'name': name,
+          'specialty': specialty,
+          'specialties': specialties is List ? specialties : [specialty],
+          'degree': doctor['medicalLicense']?.toString() ?? 'MBBS',
+          'experience': '${doctor['experienceYears'] ?? '0'} Years',
+          'about': doctor['about']?.toString() ?? 'Experienced healthcare professional',
+          'address': doctor['address']?.toString() ?? 'Clinic Address',
+          'phone': doctor['phone']?.toString() ?? '',
+          'image': doctor['profileImage']?.toString() ?? '',
+          'price': int.tryParse(doctor['consultationFee']?.toString() ?? '0') ?? 0,
+          'rating': 4.5,
+          'distance': '2.5 km',
+          'email': doctor['email']?.toString() ?? '',
+          'languages': languagesList,
+        });
       });
+
+      setState(() {
+        _clinicDoctors = loadedDoctors;
+        _filters = specialtiesSet.toList()..sort();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _clinicDoctors = [];
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load doctors: $e')),
+        );
+      }
+    }
+  }
+
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return AssetImage(imagePath);
     }
   }
 
@@ -108,14 +167,16 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
             const SizedBox(height: 20),
 
             Expanded(
-              child: filteredDoctors.isEmpty
-                  ? const Center(child: Text("No clinics found."))
-                  : ListView.builder(
-                      itemCount: filteredDoctors.length,
-                      itemBuilder: (context, index) {
-                        return _buildClinicCard(filteredDoctors[index]);
-                      },
-                    ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredDoctors.isEmpty
+                      ? const Center(child: Text("No clinics found."))
+                      : ListView.builder(
+                          itemCount: filteredDoctors.length,
+                          itemBuilder: (context, index) {
+                            return _buildClinicCard(filteredDoctors[index]);
+                          },
+                        ),
             ),
           ],
         ),
@@ -147,10 +208,13 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundColor: Colors.blue.shade50,
-                      backgroundImage: NetworkImage(doctor['image']),
+                    Hero(
+                      tag: 'doctor_${doctor['userKey'] ?? doctor['id'] ?? doctor['name']}_${doctor['image']}',
+                      child: CircleAvatar(
+                        radius: 35,
+                        backgroundColor: Colors.blue.shade50,
+                        backgroundImage: _getImageProvider(doctor['image']),
+                      ),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
@@ -166,6 +230,50 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                               Icon(Icons.location_on, size: 14, color: Colors.grey.shade600),
                               const SizedBox(width: 4),
                               Expanded(child: Text(doctor['address'], maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.language, size: 14, color: Colors.blue.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  doctor['address'],
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.language, size: 14, color: Colors.blue.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Builder(
+                                  builder: (context) {
+                                    final languages = doctor['languages'];
+                                    if (languages == null || (languages is List && languages.isEmpty)) {
+                                      return const Text(
+                                        'Languages not specified',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                                      );
+                                    }
+                                    final langList = languages as List;
+                                    final displayText = langList.take(3).join(', ') + 
+                                      (langList.length > 3 ? ' +${langList.length - 3}' : '');
+                                    return Text(
+                                      displayText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.w600),
+                                    );
+                                  },
+                                ),
+                              ),
                             ],
                           ),
                         ],

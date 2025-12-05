@@ -1,10 +1,9 @@
-
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare_plus/Screens/Patient/profile/add_family.dart';
-import 'package:healthcare_plus/Screens/Patient/profile/generic_profile.dart';
-import 'package:healthcare_plus/Screens/Patient/profile/profile_selector.dart';
+import 'Profile/add_family_sheet.dart';
+import 'Profile/generic_profile_form.dart';
+import 'Profile/profile_selector.dart';
 
 class PatientProfileManager extends StatefulWidget {
   const PatientProfileManager({super.key});

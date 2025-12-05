@@ -48,8 +48,6 @@ class _PatientsComponentState extends State<PatientsComponent> {
     super.dispose();
   }
 
-  String? _doctorSpecialty;
-
   Future<void> _initAndLoadPatients() async {
     setState(() => _isLoading = true);
 
@@ -63,28 +61,10 @@ class _PatientsComponentState extends State<PatientsComponent> {
       return;
     }
 
-    // Get doctor's specialty from Firebase
-    await _loadDoctorInfo();
-
     // Set up real-time listener for appointments
     _setupRealtimeListener();
 
     setState(() => _isLoading = false);
-  }
-
-  Future<void> _loadDoctorInfo() async {
-    try {
-      final ref = FirebaseDatabase.instance.ref("healthcare/users/providers/$doctorKey");
-      final snapshot = await ref.get();
-      
-      if (snapshot.exists) {
-        final doctorData = snapshot.value as Map<dynamic, dynamic>;
-        _doctorSpecialty = doctorData['specialties']?[0]?.toString() ?? 
-                          doctorData['specialty']?.toString() ?? "";
-      }
-    } catch (e) {
-      // Failed to load doctor info
-    }
   }
 
   void _setupRealtimeListener() {
@@ -119,6 +99,10 @@ class _PatientsComponentState extends State<PatientsComponent> {
       for (var entry in appointmentsData.entries) {
         final appointmentData = entry.value as Map<dynamic, dynamic>;
         
+        // Skip cancelled appointments
+        final status = appointmentData['status']?.toString() ?? "";
+        if (status == 'cancelled') continue;
+        
         // Get appointment doctor fields
         final appointmentDoctorId = appointmentData['doctorId']?.toString() ?? "";
         final selectedProfileKey = appointmentData['selectedProfileKey']?.toString() ?? "";
@@ -152,12 +136,21 @@ class _PatientsComponentState extends State<PatientsComponent> {
             }
           }
           
-          // Get doctor name for this appointment from selectedProfileKey
-          String doctorProfileName = "";
-          if (selectedProfileKey.isNotEmpty) {
-            final doctorData = await _getDoctorData(selectedProfileKey);
-            if (doctorData != null) {
-              doctorProfileName = "Dr. ${doctorData['firstName'] ?? ''} ${doctorData['lastName'] ?? ''}".trim();
+          // Get family member profile info from selectedProfileKey
+          String? bookingForInfo;
+          if (selectedProfileKey.isNotEmpty && patientId.isNotEmpty) {
+            final profileData = await _getFamilyMemberProfile(patientId, selectedProfileKey);
+            if (profileData != null) {
+              final profileName = profileData['name']?.toString() ?? "";
+              final relationship = profileData['relationship']?.toString() ?? "";
+              
+              if (profileName.isNotEmpty && relationship.isNotEmpty) {
+                bookingForInfo = "$profileName ($relationship)";
+              } else if (profileName.isNotEmpty) {
+                bookingForInfo = profileName;
+              } else if (relationship.isNotEmpty) {
+                bookingForInfo = relationship;
+              }
             }
           }
           
@@ -166,11 +159,6 @@ class _PatientsComponentState extends State<PatientsComponent> {
                                     appointmentData['complaint']?.toString() ?? 
                                     appointmentData['symptoms']?.toString() ?? 
                                     "General Consultation";
-          
-          // Always show doctor profile info so doctor knows which profile the appointment is for
-          if (doctorProfileName.isNotEmpty) {
-            appointmentReason = "For: $doctorProfileName | $appointmentReason";
-          }
           
           // Get date and time from appointment data
           String appointmentDate = appointmentData['date']?.toString() ?? "";
@@ -201,6 +189,7 @@ class _PatientsComponentState extends State<PatientsComponent> {
             status: appointmentData['status']?.toString() ?? "Scheduled",
             appointmentId: appointmentData['appointmentId']?.toString() ?? entry.key,
             patientId: patientId,
+            bookingFor: bookingForInfo,
           ));
         }
       }
@@ -235,16 +224,16 @@ class _PatientsComponentState extends State<PatientsComponent> {
     return null;
   }
 
-  Future<Map<dynamic, dynamic>?> _getDoctorData(String doctorId) async {
+  Future<Map<dynamic, dynamic>?> _getFamilyMemberProfile(String patientId, String profileKey) async {
     try {
-      final ref = FirebaseDatabase.instance.ref("healthcare/users/providers/$doctorId");
+      final ref = FirebaseDatabase.instance.ref("healthcare/users/patients/$patientId/familyMembers/$profileKey");
       final snapshot = await ref.get();
       
       if (snapshot.exists) {
         return snapshot.value as Map<dynamic, dynamic>;
       }
     } catch (e) {
-      // Error getting doctor data
+      // Error getting family member profile
     }
     return null;
   }
