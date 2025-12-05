@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingBottomSheet extends StatefulWidget {
   final Map<String, dynamic> doctor;
@@ -12,6 +14,12 @@ class BookingBottomSheet extends StatefulWidget {
 class _BookingBottomSheetState extends State<BookingBottomSheet> {
   int _selectedDateIndex = 0;
   int _selectedTimeIndex = -1;
+  
+  // Profile selection
+  String? _selectedProfileKey;
+  String? _selectedProfileName;
+  List<Map<String, dynamic>> _profiles = [];
+  bool _loadingProfiles = true;
 
   // Generate next 7 days dynamically
   final List<DateTime> _dates = List.generate(
@@ -22,6 +30,187 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   // Mock Time Slots
   final List<String> _morningSlots = ["09:00 AM", "09:30 AM", "10:00 AM", "11:15 AM"];
   final List<String> _afternoonSlots = ["02:00 PM", "03:45 PM", "04:30 PM", "06:00 PM"];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userKey = prefs.getString("userKey");
+      
+      if (userKey == null) {
+        setState(() => _loadingProfiles = false);
+        return;
+      }
+
+      final snapshot = await FirebaseDatabase.instance
+          .ref("healthcare/users/patients/$userKey")
+          .get();
+
+      if (!snapshot.exists) {
+        setState(() => _loadingProfiles = false);
+        return;
+      }
+
+      final userData = Map<String, dynamic>.from(snapshot.value as Map);
+      final profiles = <Map<String, dynamic>>[];
+
+      // Add main user profile
+      profiles.add({
+        'key': userKey,
+        'name': '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim(),
+        'relation': 'Self',
+        'isMain': true,
+      });
+
+      // Add family members
+      if (userData['family'] != null) {
+        final familyMap = Map<String, dynamic>.from(userData['family'] as Map);
+        familyMap.forEach((key, value) {
+          final member = Map<String, dynamic>.from(value as Map);
+          profiles.add({
+            'key': key,
+            'name': member['name'] ?? 'Unknown',
+            'relation': member['relation'] ?? 'Family',
+            'isMain': false,
+          });
+        });
+      }
+
+      // Set default selection to main user
+      setState(() {
+        _profiles = profiles;
+        if (profiles.isNotEmpty) {
+          _selectedProfileKey = profiles[0]['key'];
+          _selectedProfileName = profiles[0]['name'];
+        }
+        _loadingProfiles = false;
+      });
+    } catch (e) {
+      setState(() => _loadingProfiles = false);
+    }
+  }
+
+  Future<void> _bookAppointment() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final patientId = prefs.getString("userKey");
+      
+      if (patientId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please login first"), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+
+      // Fetch patient data from Firebase
+      final patientSnapshot = await FirebaseDatabase.instance
+          .ref('healthcare/users/patients/$patientId')
+          .get();
+      
+      String patientName = "Unknown Patient";
+      String bookedByName = "Unknown";
+      String? bookingForName;
+      String? bookingForRelation;
+      
+      if (patientSnapshot.exists) {
+        final patientData = Map<String, dynamic>.from(patientSnapshot.value as Map);
+        final firstName = patientData['firstName']?.toString() ?? '';
+        final lastName = patientData['lastName']?.toString() ?? '';
+        bookedByName = '$firstName $lastName'.trim();
+        if (bookedByName.isEmpty) {
+          bookedByName = patientData['name']?.toString() ?? "Unknown";
+        }
+        
+        // Check if booking for family member or self
+        if (_selectedProfileKey == patientId) {
+          // Booking for self - show main user name
+          patientName = bookedByName;
+        } else {
+          // Booking for family member - show "Booked by X for Y (Relation)"
+          if (patientData['family'] != null) {
+            final familyMap = Map<String, dynamic>.from(patientData['family'] as Map);
+            if (familyMap.containsKey(_selectedProfileKey)) {
+              final memberData = Map<String, dynamic>.from(familyMap[_selectedProfileKey] as Map);
+              bookingForName = memberData['name']?.toString() ?? '';
+              bookingForRelation = memberData['relation']?.toString() ?? '';
+              
+              // Format: "Booked by Sahil Test for SA (Sibling)"
+              if (bookingForName.isNotEmpty && bookingForRelation.isNotEmpty) {
+                patientName = 'Booked by $bookedByName for $bookingForName ($bookingForRelation)';
+              } else if (bookingForName.isNotEmpty) {
+                patientName = 'Booked by $bookedByName for $bookingForName';
+              } else {
+                patientName = '$bookedByName (Family Member)';
+              }
+            }
+          }
+        }
+      }
+
+      // Get selected time
+      String selectedTime = "";
+      if (_selectedTimeIndex < _morningSlots.length) {
+        selectedTime = _morningSlots[_selectedTimeIndex];
+      } else {
+        selectedTime = _afternoonSlots[_selectedTimeIndex - _morningSlots.length];
+      }
+
+      // Get selected date
+      final selectedDate = _dates[_selectedDateIndex];
+
+      // Create appointment data
+      final appointmentRef = FirebaseDatabase.instance.ref('healthcare/all_appointments').push();
+      final appointmentId = appointmentRef.key!;
+
+      final appointmentData = {
+        'appointmentId': appointmentId,
+        'patientId': patientId,
+        'patientName': patientName,
+        'bookedBy': bookedByName, // Main user who booked
+        'bookingForName': bookingForName, // Family member name (if applicable)
+        'bookingForRelation': bookingForRelation, // Family member relation (if applicable)
+        'doctorId': widget.doctor['userKey'] ?? widget.doctor['id'] ?? '',
+        'doctorName': widget.doctor['name'] ?? 'Unknown Doctor',
+        'specialty': widget.doctor['specialty'] ?? 'Specialist',
+        'type': widget.doctor['type'] ?? 'Clinic',
+        'date': selectedDate.toIso8601String(),
+        'time': selectedTime,
+        'selectedProfileKey': _selectedProfileKey,
+        'status': 'scheduled',
+        'reason': 'General Consultation',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      await appointmentRef.set(appointmentData);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Booking Successful for $_selectedProfileName!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Booking failed: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   // Helper for Date Name (Mon, Tue)
   String _getDayName(int weekday) {
@@ -58,6 +247,73 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           ),
           const Divider(),
           const SizedBox(height: 10),
+
+          // 0. PROFILE SELECTOR
+          const Text("Booking For", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 10),
+          _loadingProfiles
+              ? const Center(child: CircularProgressIndicator())
+              : Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedProfileKey,
+                      hint: const Text("Select Profile"),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      items: _profiles.map((profile) {
+                        return DropdownMenuItem<String>(
+                          value: profile['key'],
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: profile['isMain'] ? Colors.blue.shade100 : Colors.orange.shade100,
+                                child: Text(
+                                  profile['name'][0].toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: profile['isMain'] ? Colors.blue.shade900 : Colors.orange.shade900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      profile['name'],
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                    Text(
+                                      profile['relation'],
+                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedProfileKey = value;
+                          _selectedProfileName = _profiles.firstWhere((p) => p['key'] == value)['name'];
+                        });
+                      },
+                    ),
+                  ),
+                ),
+          const SizedBox(height: 20),
 
           // 1. DATE SELECTOR
           const Text("Select Date", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -146,17 +402,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: _selectedTimeIndex == -1 
+              onPressed: (_selectedTimeIndex == -1 || _selectedProfileKey == null) 
                 ? null 
-                : () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text("Booking Successful!"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
+                : () => _bookAppointment(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

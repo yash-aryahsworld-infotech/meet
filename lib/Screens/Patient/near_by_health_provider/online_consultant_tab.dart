@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import './healthcare_filters.dart';
 import './doctor_card.dart';
 
@@ -13,45 +14,109 @@ class OnlineConsultantPage extends StatefulWidget {
 class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
   String _selectedFilter = "All";
   String _searchQuery = "";
+  bool _isLoading = true;
+  
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  List<String> _filters = ["All"];
+  List<Map<String, dynamic>> _doctors = [];
 
-  final List<String> _filters = ["All", "General Physician", "Cardiologist", "Pediatrician", "Dermatologist"];
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctors();
+  }
 
-  // Doctor Data
-  final List<Map<String, dynamic>> _doctors = [
-    {
-      "name": "Dr. Sarah Wilson",
-      "specialty": "General Physician",
-      "degree": "MBBS, MD", 
-      "experience": "8 Years",
-      "about": "Dr. Sarah is a compassionate General Physician with 8 years of experience.",
-      "image": "images/female.jpg", // Ensure this exists or use network URL
-      "price": 299,
-      "rating": 4.8,
-      "durations": ["10 min", "30 min"]
-    },
-    {
-      "name": "Dr. Raj Patel",
-      "specialty": "Cardiologist",
-      "degree": "MBBS, DM (Cardio)", 
-      "experience": "15+ Years",
-      "about": "Dr. Raj Patel is a renowned Cardiologist specializing in interventional cardiology.",
-      "image": "https://randomuser.me/api/portraits/men/32.jpg",
-      "price": 599,
-      "rating": 4.9,
-      "durations": ["15 min", "45 min", "1 hr"]
-    },
-    {
-      "name": "Dr. Emily Chen",
-      "specialty": "Dermatologist",
-      "degree": "MBBS, MD (Derma)",
-      "experience": "5 Years",
-      "about": "Dr. Emily helps patients achieve healthy skin through personalized care.",
-      "image": "https://randomuser.me/api/portraits/women/44.jpg",
-      "price": 399,
-      "rating": 4.5,
-      "durations": ["10 min", "20 min"]
-    },
-  ];
+  Future<void> _loadDoctors() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final snapshot = await _database.child('healthcare/users/providers').get();
+
+      if (!snapshot.exists) {
+        setState(() {
+          _doctors = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final providersData = snapshot.value as Map<dynamic, dynamic>;
+      final loadedDoctors = <Map<String, dynamic>>[];
+      final specialtiesSet = <String>{'All'};
+
+      providersData.forEach((key, value) {
+        final doctor = value as Map<dynamic, dynamic>;
+        
+        // Build doctor data
+        final firstName = doctor['firstName']?.toString() ?? '';
+        final lastName = doctor['lastName']?.toString() ?? '';
+        final name = 'Dr. $firstName $lastName'.trim();
+        
+        // Get specialties
+        final specialties = doctor['specialties'];
+        String specialty = 'General Physician';
+        if (specialties != null) {
+          if (specialties is List && specialties.isNotEmpty) {
+            specialty = specialties[0].toString();
+            // Add all specialties to filter
+            for (var spec in specialties) {
+              specialtiesSet.add(spec.toString());
+            }
+          } else if (specialties is String) {
+            specialty = specialties;
+            specialtiesSet.add(specialty);
+          }
+        }
+
+        // Get languages
+        final languages = doctor['languages'];
+        List<String> languagesList = [];
+        if (languages != null) {
+          if (languages is List) {
+            languagesList = languages.map((e) => e.toString()).toList();
+          } else if (languages is Map) {
+            // Firebase sometimes returns arrays as maps with numeric keys
+            languagesList = languages.values.map((e) => e.toString()).toList();
+          } else if (languages is String) {
+            languagesList = [languages];
+          }
+        }
+
+        loadedDoctors.add({
+          'userKey': key,
+          'name': name,
+          'specialty': specialty,
+          'specialties': specialties is List ? specialties : [specialty],
+          'degree': doctor['medicalLicense']?.toString() ?? 'MBBS',
+          'experience': '${doctor['experienceYears'] ?? '0'} Years',
+          'about': doctor['about']?.toString() ?? 'Experienced healthcare professional',
+          'image': doctor['profileImage']?.toString() ?? '',
+          'price': int.tryParse(doctor['consultationFee']?.toString() ?? '0') ?? 0,
+          'rating': 4.5, // Default rating
+          'durations': ['10 min', '30 min', '45 min'],
+          'phone': doctor['phone']?.toString() ?? '',
+          'email': doctor['email']?.toString() ?? '',
+          'languages': languagesList,
+        });
+      });
+
+      setState(() {
+        _doctors = loadedDoctors;
+        _filters = specialtiesSet.toList()..sort();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _doctors = [];
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load doctors: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,14 +166,16 @@ class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
 
             // Doctor List
             Expanded(
-              child: filteredDoctors.isEmpty
-                  ? const Center(child: Text("No doctors found."))
-                  : ListView.builder(
-                      itemCount: filteredDoctors.length,
-                      itemBuilder: (context, index) {
-                        return DoctorCard(doctor: filteredDoctors[index]);
-                      },
-                    ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredDoctors.isEmpty
+                      ? const Center(child: Text("No doctors found."))
+                      : ListView.builder(
+                          itemCount: filteredDoctors.length,
+                          itemBuilder: (context, index) {
+                            return DoctorCard(doctor: filteredDoctors[index]);
+                          },
+                        ),
             ),
           ],
         ),

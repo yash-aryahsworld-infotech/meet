@@ -41,7 +41,7 @@ class DoctorCard extends StatelessWidget {
                   children: [
                     // Profile Image
                     Hero(
-                      tag: doctor['image'], // Animation Tag
+                      tag: 'doctor_${doctor['userKey'] ?? doctor['id'] ?? doctor['name']}_${doctor['image']}', // Unique Animation Tag
                       child: CircleAvatar(
                         radius: 32,
                         backgroundImage: _getImageProvider(doctor['image']),
@@ -75,7 +75,36 @@ class DoctorCard extends StatelessWidget {
                               const SizedBox(width: 2),
                               Text("${doctor['rating']}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                             ],
-                          )
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.language, size: 14, color: Colors.blue.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Builder(
+                                  builder: (context) {
+                                    final languages = doctor['languages'];
+                                    if (languages == null || (languages is List && languages.isEmpty)) {
+                                      return const Text(
+                                        'Languages not specified',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                                      );
+                                    }
+                                    final langList = languages as List;
+                                    final displayText = langList.take(3).join(', ') + 
+                                      (langList.length > 3 ? ' +${langList.length - 3}' : '');
+                                    return Text(
+                                      displayText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.w600),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

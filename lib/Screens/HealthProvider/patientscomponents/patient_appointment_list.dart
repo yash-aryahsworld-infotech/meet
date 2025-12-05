@@ -1,5 +1,8 @@
 
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
+import 'package:healthcare_plus/Screens/HealthProvider/documents/doctor_documents_viewer.dart';
 
 class AppointmentModel {
   final String name;
@@ -11,6 +14,7 @@ class AppointmentModel {
   final String status;
   final String? appointmentId;
   final String? patientId;
+  final String? bookingFor; // Family member info (e.g., "John (Father)")
 
   AppointmentModel({
     required this.name,
@@ -22,6 +26,7 @@ class AppointmentModel {
     required this.status,
     this.appointmentId,
     this.patientId,
+    this.bookingFor,
   });
 }
 
@@ -51,6 +56,142 @@ class PatientAppointmentList extends StatelessWidget {
     );
   }
 
+  Future<void> _cancelAppointment(BuildContext context, AppointmentModel data) async {
+    final TextEditingController reasonController = TextEditingController();
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+    // Show dialog to get cancellation reason
+    final String? cancellationReason = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Cancel Appointment'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Are you sure you want to cancel the appointment with ${data.name}?',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Reason for cancellation *',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: reasonController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Please provide a reason for cancellation',
+                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.blue, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Cancellation reason is required';
+                      }
+                      if (value.trim().length < 10) {
+                        return 'Please provide a detailed reason (min 10 characters)';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Go Back'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(context).pop(reasonController.text.trim());
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Cancel Appointment'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user didn't provide a reason, exit
+    if (cancellationReason == null || cancellationReason.isEmpty) {
+      reasonController.dispose();
+      return;
+    }
+
+    try {
+      final appointmentId = data.appointmentId;
+      if (appointmentId == null || appointmentId.isEmpty) {
+        throw Exception('Appointment ID not found');
+      }
+
+      // Update appointment status to 'cancelled' in Firebase with reason
+      await FirebaseDatabase.instance
+          .ref('healthcare/all_appointments/$appointmentId')
+          .update({
+        'status': 'cancelled',
+        'cancelledAt': DateTime.now().toIso8601String(),
+        'cancelledBy': 'doctor',
+        'cancellationReason': cancellationReason,
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Appointment cancelled successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel appointment: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      reasonController.dispose();
+    }
+  }
+
   Widget _buildBookingCard(BuildContext context, AppointmentModel data) {
     return Container(
       width: double.infinity,
@@ -78,9 +219,9 @@ class PatientAppointmentList extends StatelessWidget {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.blue.shade50,
-                  backgroundImage: AssetImage(data.image), // Use NetworkImage if URL
+                  backgroundImage: data.image.isNotEmpty ? AssetImage(data.image) : null,
                   child: data.image.isEmpty 
-                    ? Text(data.name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))
+                    ? Text(data.name.isNotEmpty ? data.name[0] : '?', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))
                     : null,
                 ),
                 const SizedBox(width: 16),
@@ -91,16 +232,19 @@ class PatientAppointmentList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            data.name,
-                            style: const TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87
+                          Expanded(
+                            child: Text(
+                              data.name,
+                              style: const TextStyle(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black87
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           // Gender/Age Badge
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -130,6 +274,26 @@ class PatientAppointmentList extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (data.bookingFor != null && data.bookingFor!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.family_restroom, size: 14, color: Colors.blue.shade600),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                data.bookingFor!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue.shade700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -143,49 +307,140 @@ class PatientAppointmentList extends StatelessWidget {
           // ---------------- Bottom Section: Time & Action ----------------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // Booking Time
-                Icon(Icons.calendar_today_outlined, size: 16, color: Colors.blue.shade400),
-                const SizedBox(width: 8),
-                Text(
-                  data.time,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                
-                const Spacer(),
-
-                // Video Call Button
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle video call action
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Starting video call with ${data.name}...")),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Primary color
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  // Booking Time
+                  Icon(Icons.calendar_today_outlined, size: 16, color: Colors.blue.shade400),
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    child: Text(
+                      data.time,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    icon: const Icon(Icons.videocam_outlined, size: 18),
-                    label: const Text(
-                      "Video Call",
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                  
+                  const SizedBox(width: 8),
+
+                  // Documents Button
+                  SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DoctorDocumentsViewer(
+                              appointmentId: data.appointmentId ?? '',
+                              patientName: data.name,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade50,
+                        foregroundColor: Colors.orange,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.folder_open, size: 18),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Chat Button
+                  SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              appointmentId: data.appointmentId ?? '',
+                              patientId: data.patientId ?? '',
+                              patientName: data.name,
+                              doctorId: '', // Will be set from SharedPreferences in ChatScreen
+                              doctorName: '', // Will be set from SharedPreferences in ChatScreen
+                              isDoctor: true,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade50,
+                        foregroundColor: Colors.green,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.chat_bubble_outline, size: 18),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Cancel Button
+                  SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: ElevatedButton(
+                      onPressed: () => _cancelAppointment(context, data),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.red,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.cancel_outlined, size: 18),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Video Call Button
+                  SizedBox(
+                    height: 36,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // Handle video call action
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Starting video call with ${data.name}...")),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue, // Primary color
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      icon: const Icon(Icons.videocam_outlined, size: 18),
+                      label: const Text(
+                        "Video Call",
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

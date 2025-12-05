@@ -35,7 +35,7 @@ class DoctorDetailsPage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
                   Hero(
-                    tag: doctor['image'], // Smooth animation from the card
+                    tag: 'doctor_${doctor['userKey'] ?? doctor['id'] ?? doctor['name']}_${doctor['image']}', // Unique tag matching card
                     child: CircleAvatar(
                       radius: 60,
                       backgroundImage: _getImageProvider(doctor['image']),

@@ -35,6 +35,7 @@ import '../Corporate/programs_page.dart';
 import '../Corporate/settings_page.dart';
 import '../Patient/book_consultation.dart';
 import '../Patient/patient_dashboard.dart';
+import '../Patient/profile_component.dart';
 
 /// Dynamic Sidebar model and role-based lists.
 /// Edit these arrays to change icons, titles, routes and notification counts.
@@ -63,14 +64,21 @@ final List<SidebarItem> patientSidebar = [
     icon: Icons.dashboard,
     title: 'Dashboard',
     route: '/patientdashboard',
-    page: PatientDashboard(),
+    page: const PatientDashboard(),
   ),
   SidebarItem(
     icon: Icons.video_call,
     title: 'Book Consultation',
     route: '/bookconsultation',
     page: BookConsultation(),
-  ),  SidebarItem(
+  ),
+  SidebarItem(
+    icon: Icons.person,
+    title: 'Profile',
+    route: '/Profile',
+    page: const PatientProfileManager(),
+  ),
+  SidebarItem(
     icon: Icons.medical_services_outlined,
     title: 'Doctors',
     route: '/doctors',
