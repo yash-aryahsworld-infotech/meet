@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
+import 'package:healthcare_plus/Screens/Patient/appointment/reschedule_appoinment.dart';
 
 // Wrapper Widget
 class AppointmentList extends StatelessWidget {
@@ -413,7 +414,20 @@ class AppointmentCard extends StatelessWidget {
                       // 2. Reschedule
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true, // Allow sheet to take up more height
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) => SizedBox(
+                            // Limit height to 85% of screen
+                            height: MediaQuery.of(context).size.height * 0.85,
+                            child: RescheduleBottomSheet(appointment: appointment),
+                          ),
+                        );
+                      },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.grey.shade700,
                             side: BorderSide(color: Colors.grey.shade300),
