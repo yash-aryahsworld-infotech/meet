@@ -126,6 +126,11 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   void _generateTimeSlotsForSelectedDate() {
     final selectedDate = _dates[_selectedDateIndex];
     final dayName = _getDayNameFull(selectedDate.weekday);
+    final now = DateTime.now();
+    final isToday = selectedDate.year == now.year && 
+                    selectedDate.month == now.month && 
+                    selectedDate.day == now.day;
+    final currentMinutes = isToday ? (now.hour * 60 + now.minute) : 0;
     
     final slots = <String>[];
     
@@ -149,6 +154,12 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
           
           while (startMinutes < endMinutes) {
+            // Skip slots that have already passed (for today only)
+            if (isToday && startMinutes <= currentMinutes) {
+              startMinutes += slotDuration;
+              continue;
+            }
+            
             final hour = startMinutes ~/ 60;
             final minute = startMinutes % 60;
             final timeStr = _formatTime(hour, minute);
@@ -163,6 +174,43 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       _availableTimeSlots = slots;
       _selectedTimeIndex = -1; // Reset selection
     });
+  }
+  
+  List<String> _getMorningSlots() {
+    return _availableTimeSlots.where((slot) {
+      final hour = _parseHourFromSlot(slot);
+      return hour < 12; // Before 12 PM
+    }).toList();
+  }
+  
+  List<String> _getAfternoonSlots() {
+    return _availableTimeSlots.where((slot) {
+      final hour = _parseHourFromSlot(slot);
+      return hour >= 12 && hour < 17; // 12 PM to 5 PM
+    }).toList();
+  }
+  
+  List<String> _getEveningSlots() {
+    return _availableTimeSlots.where((slot) {
+      final hour = _parseHourFromSlot(slot);
+      return hour >= 17; // 5 PM onwards
+    }).toList();
+  }
+  
+  int _parseHourFromSlot(String slot) {
+    // Parse "09:30 AM" or "02:30 PM" format
+    final parts = slot.split(' ');
+    final timeParts = parts[0].split(':');
+    int hour = int.parse(timeParts[0]);
+    final period = parts[1];
+    
+    if (period == 'PM' && hour != 12) {
+      hour += 12;
+    } else if (period == 'AM' && hour == 12) {
+      hour = 0;
+    }
+    
+    return hour;
   }
 
   String _getDayNameFull(int weekday) {
@@ -477,12 +525,71 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                         ),
                       )
                     : SingleChildScrollView(
-                        child: Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: List.generate(_availableTimeSlots.length, (index) {
-                            return _buildTimeChip(index, _availableTimeSlots[index]);
-                          }),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Morning Slots
+                            if (_getMorningSlots().isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.wb_sunny, size: 16, color: Colors.orange.shade400),
+                                  const SizedBox(width: 6),
+                                  const Text("Morning", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _getMorningSlots().map((slot) {
+                                  final index = _availableTimeSlots.indexOf(slot);
+                                  return _buildTimeChip(index, slot);
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            
+                            // Afternoon Slots
+                            if (_getAfternoonSlots().isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.wb_sunny_outlined, size: 16, color: Colors.amber.shade600),
+                                  const SizedBox(width: 6),
+                                  const Text("Afternoon", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _getAfternoonSlots().map((slot) {
+                                  final index = _availableTimeSlots.indexOf(slot);
+                                  return _buildTimeChip(index, slot);
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            
+                            // Evening Slots
+                            if (_getEveningSlots().isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.nightlight_round, size: 16, color: Colors.indigo.shade400),
+                                  const SizedBox(width: 6),
+                                  const Text("Evening", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _getEveningSlots().map((slot) {
+                                  final index = _availableTimeSlots.indexOf(slot);
+                                  return _buildTimeChip(index, slot);
+                                }).toList(),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
           ),
