@@ -9,6 +9,8 @@ class AppointmentModel {
   final String gender;
   final int age;
   final String status;
+  final String? appointmentId;
+  final String? patientId;
 
   AppointmentModel({
     required this.name,
@@ -18,6 +20,8 @@ class AppointmentModel {
     required this.gender,
     required this.age,
     required this.status,
+    this.appointmentId,
+    this.patientId,
   });
 }
 
