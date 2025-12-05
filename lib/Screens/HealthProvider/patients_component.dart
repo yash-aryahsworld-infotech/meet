@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/patientscomponents/patient_appointment_list.dart';
 
 // Assuming these exist in your project structure
@@ -14,8 +16,17 @@ class PatientsComponent extends StatefulWidget {
 
 class _PatientsComponentState extends State<PatientsComponent> {
   int selectedTab = 0;
+  String? doctorKey;
+  bool _isLoading = true;
+  String _searchQuery = "";
 
   final List<String> tabTitles = ["All Patients", "Recent Visits", "Upcoming"];
+  
+  List<AppointmentModel> _allAppointments = [];
+  List<AppointmentModel> _recentAppointments = [];
+  List<AppointmentModel> _upcomingAppointments = [];
+  
+  DatabaseReference? _appointmentsRef;
   
   // Dynamic counts based on our data
   List<int> get tabCounts => [
@@ -24,52 +35,336 @@ class _PatientsComponentState extends State<PatientsComponent> {
     _upcomingAppointments.length,
   ];
 
-  // ---------------------------------------------------------------------------
-  // ⭐ MOCK DATA: In a real app, this comes from an API
-  // ---------------------------------------------------------------------------
-  final List<AppointmentModel> _allAppointments = [
-    AppointmentModel(
-      name: "Sarah Jenkins",
-      image: "assets/images/p1.jpg", // Replace with actual path or network image
-      history: "Chronic Migraine Diagnosis",
-      time: "Today, 10:30 AM",
-      gender: "Female",
-      age: 28,
-      status: "Scheduled",
-    ),
-    AppointmentModel(
-      name: "Michael Ross",
-      image: "assets/images/p2.jpg",
-      history: "Post-surgery checkup (ACL)",
-      time: "Today, 02:15 PM",
-      gender: "Male",
-      age: 45,
-      status: "Waiting",
-    ),
-    AppointmentModel(
-      name: "Emily Clark",
-      image: "assets/images/p3.jpg",
-      history: "General Consultation - Flu",
-      time: "Yesterday, 09:00 AM",
-      gender: "Female",
-      age: 32,
-      status: "Completed",
-    ),
-  ];
-
-  late final List<AppointmentModel> _recentAppointments;
-  late final List<AppointmentModel> _upcomingAppointments;
-
   @override
   void initState() {
     super.initState();
-    // Filtering mock data for the tabs
-    _recentAppointments = _allAppointments.where((e) => e.time.contains("Yesterday")).toList();
-    _upcomingAppointments = _allAppointments.where((e) => e.time.contains("Today") || e.time.contains("Tomorrow")).toList();
+    _initAndLoadPatients();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the listener when widget is disposed
+    _appointmentsRef?.onValue.drain();
+    super.dispose();
+  }
+
+  String? _doctorSpecialty;
+
+  Future<void> _initAndLoadPatients() async {
+    setState(() => _isLoading = true);
+
+    // Get doctor info from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    doctorKey = prefs.getString("userKey");
+
+    if (doctorKey == null || doctorKey!.isEmpty) {
+      _showSnackBar("Doctor not logged in", bg: Colors.red);
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    // Get doctor's specialty from Firebase
+    await _loadDoctorInfo();
+
+    // Set up real-time listener for appointments
+    _setupRealtimeListener();
+
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadDoctorInfo() async {
+    try {
+      final ref = FirebaseDatabase.instance.ref("healthcare/users/providers/$doctorKey");
+      final snapshot = await ref.get();
+      
+      if (snapshot.exists) {
+        final doctorData = snapshot.value as Map<dynamic, dynamic>;
+        _doctorSpecialty = doctorData['specialties']?[0]?.toString() ?? 
+                          doctorData['specialty']?.toString() ?? "";
+      }
+    } catch (e) {
+      // Failed to load doctor info
+    }
+  }
+
+  void _setupRealtimeListener() {
+    _appointmentsRef = FirebaseDatabase.instance.ref("healthcare/all_appointments");
+    
+    _appointmentsRef!.onValue.listen((event) {
+      if (!mounted) return;
+      
+      if (!event.snapshot.exists) {
+        setState(() {
+          _allAppointments = [];
+          _recentAppointments = [];
+          _upcomingAppointments = [];
+        });
+        return;
+      }
+
+      _processAppointmentsSnapshot(event.snapshot);
+    }, onError: (error) {
+      if (mounted) {
+        _showSnackBar("Error loading appointments: $error", bg: Colors.red);
+      }
+    });
+  }
+
+  Future<void> _processAppointmentsSnapshot(DataSnapshot snapshot) async {
+    try {
+      Map<dynamic, dynamic> appointmentsData = snapshot.value as Map<dynamic, dynamic>;
+      List<AppointmentModel> loadedAppointments = [];
+
+      // Parse appointments
+      for (var entry in appointmentsData.entries) {
+        final appointmentData = entry.value as Map<dynamic, dynamic>;
+        
+        // Get appointment doctor fields
+        final appointmentDoctorId = appointmentData['doctorId']?.toString() ?? "";
+        final selectedProfileKey = appointmentData['selectedProfileKey']?.toString() ?? "";
+        final doctorKeyStr = doctorKey?.toString() ?? "";
+        
+        // Match appointments for this doctor - check doctorId field
+        bool isMatch = appointmentDoctorId == doctorKeyStr;
+        
+        if (isMatch) {
+          
+          // Get patient details
+          final patientId = appointmentData['patientId']?.toString() ?? "";
+          
+          // Use data directly from appointment record
+          String patientName = appointmentData['patientName']?.toString() ?? "Unknown Patient";
+          String patientImage = "";
+          String gender = "Unknown";
+          int age = 0;
+          
+          // Try to get additional patient data if patientId exists
+          if (patientId.isNotEmpty) {
+            final patientData = await _getPatientData(patientId);
+            if (patientData != null) {
+              patientImage = patientData['profileImage']?.toString() ?? "";
+              gender = patientData['gender']?.toString() ?? "Unknown";
+              
+              // Get age directly from database
+              if (patientData['age'] != null) {
+                age = int.tryParse(patientData['age'].toString()) ?? 0;
+              }
+            }
+          }
+          
+          // Get doctor name for this appointment from selectedProfileKey
+          String doctorProfileName = "";
+          if (selectedProfileKey.isNotEmpty) {
+            final doctorData = await _getDoctorData(selectedProfileKey);
+            if (doctorData != null) {
+              doctorProfileName = "Dr. ${doctorData['firstName'] ?? ''} ${doctorData['lastName'] ?? ''}".trim();
+            }
+          }
+          
+          // Build appointment reason/history
+          String appointmentReason = appointmentData['reason']?.toString() ?? 
+                                    appointmentData['complaint']?.toString() ?? 
+                                    appointmentData['symptoms']?.toString() ?? 
+                                    "General Consultation";
+          
+          // Always show doctor profile info so doctor knows which profile the appointment is for
+          if (doctorProfileName.isNotEmpty) {
+            appointmentReason = "For: $doctorProfileName | $appointmentReason";
+          }
+          
+          // Get date and time from appointment data
+          String appointmentDate = appointmentData['date']?.toString() ?? "";
+          final appointmentTime = appointmentData['time']?.toString() ?? 
+                                 appointmentData['selectedTime']?.toString() ?? 
+                                 appointmentData['timeSlot']?.toString() ?? "";
+          
+          // If no date field, try to use timestamp
+          if (appointmentDate.isEmpty && appointmentData['timestamp'] != null) {
+            try {
+              final timestamp = appointmentData['timestamp'];
+              final dateTime = DateTime.fromMillisecondsSinceEpoch(
+                timestamp is int ? timestamp : int.parse(timestamp.toString())
+              );
+              appointmentDate = dateTime.toIso8601String();
+            } catch (e) {
+              // Failed to parse timestamp
+            }
+          }
+          
+          loadedAppointments.add(AppointmentModel(
+            name: patientName,
+            image: patientImage,
+            history: appointmentReason,
+            time: _formatAppointmentTime(appointmentDate, appointmentTime),
+            gender: gender,
+            age: age,
+            status: appointmentData['status']?.toString() ?? "Scheduled",
+            appointmentId: appointmentData['appointmentId']?.toString() ?? entry.key,
+            patientId: patientId,
+          ));
+        }
+      }
+
+      // Sort by date/time
+      loadedAppointments.sort((a, b) => _compareAppointmentTimes(a.time, b.time));
+
+      if (mounted) {
+        setState(() {
+          _allAppointments = loadedAppointments;
+          _filterAppointments();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar("Failed to process appointments: $e", bg: Colors.red);
+      }
+    }
+  }
+
+  Future<Map<dynamic, dynamic>?> _getPatientData(String patientId) async {
+    try {
+      final ref = FirebaseDatabase.instance.ref("healthcare/users/patients/$patientId");
+      final snapshot = await ref.get();
+      
+      if (snapshot.exists) {
+        return snapshot.value as Map<dynamic, dynamic>;
+      }
+    } catch (e) {
+      // Error getting patient data
+    }
+    return null;
+  }
+
+  Future<Map<dynamic, dynamic>?> _getDoctorData(String doctorId) async {
+    try {
+      final ref = FirebaseDatabase.instance.ref("healthcare/users/providers/$doctorId");
+      final snapshot = await ref.get();
+      
+      if (snapshot.exists) {
+        return snapshot.value as Map<dynamic, dynamic>;
+      }
+    } catch (e) {
+      // Error getting doctor data
+    }
+    return null;
+  }
+
+  void _filterAppointments() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    _recentAppointments = _allAppointments.where((appointment) {
+      final appointmentDate = _parseAppointmentDate(appointment.time);
+      return appointmentDate != null && appointmentDate.isBefore(today);
+    }).toList();
+
+    _upcomingAppointments = _allAppointments.where((appointment) {
+      final appointmentDate = _parseAppointmentDate(appointment.time);
+      return appointmentDate != null && 
+             (appointmentDate.isAtSameMomentAs(today) || appointmentDate.isAfter(today));
+    }).toList();
+  }
+
+  String _formatAppointmentTime(String? date, String? time) {
+    if (date == null || date.isEmpty) return "Not scheduled";
+    
+    try {
+      final appointmentDate = DateTime.parse(date);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final appointmentDay = DateTime(appointmentDate.year, appointmentDate.month, appointmentDate.day);
+
+      String dayLabel;
+      if (appointmentDay == today) {
+        dayLabel = "Today";
+      } else if (appointmentDay == tomorrow) {
+        dayLabel = "Tomorrow";
+      } else if (appointmentDay == today.subtract(const Duration(days: 1))) {
+        dayLabel = "Yesterday";
+      } else {
+        dayLabel = "${appointmentDate.day}/${appointmentDate.month}/${appointmentDate.year}";
+      }
+
+      // Include time if available
+      if (time != null && time.isNotEmpty) {
+        return "$dayLabel, $time";
+      } else {
+        return dayLabel;
+      }
+    } catch (e) {
+      // If date parsing fails, return raw values
+      if (time != null && time.isNotEmpty) {
+        return "$date, $time";
+      }
+      return date;
+    }
+  }
+
+  DateTime? _parseAppointmentDate(String timeString) {
+    try {
+      if (timeString.contains("Today")) {
+        return DateTime.now();
+      } else if (timeString.contains("Tomorrow")) {
+        return DateTime.now().add(const Duration(days: 1));
+      } else if (timeString.contains("Yesterday")) {
+        return DateTime.now().subtract(const Duration(days: 1));
+      } else {
+        // Try to parse date format
+        final parts = timeString.split(",");
+        if (parts.isNotEmpty) {
+          final dateParts = parts[0].split("/");
+          if (dateParts.length == 3) {
+            return DateTime(
+              int.parse(dateParts[2]),
+              int.parse(dateParts[1]),
+              int.parse(dateParts[0]),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Error parsing date
+    }
+    return null;
+  }
+
+  int _compareAppointmentTimes(String time1, String time2) {
+    final date1 = _parseAppointmentDate(time1);
+    final date2 = _parseAppointmentDate(time2);
+    
+    if (date1 == null || date2 == null) return 0;
+    return date2.compareTo(date1); // Most recent first
+  }
+
+  void _showSnackBar(String message, {Color bg = Colors.blue}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: bg,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  List<AppointmentModel> _getFilteredAppointments(List<AppointmentModel> appointments) {
+    if (_searchQuery.isEmpty) return appointments;
+    
+    return appointments.where((appointment) {
+      return appointment.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             appointment.history.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 40), // Bottom padding for scroll
       child: Column(
@@ -87,10 +382,25 @@ class _PatientsComponentState extends State<PatientsComponent> {
           // Search Bar
           // -------------------------------------------------------------
           TextField(
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
               hintText: "Search patients...",
               hintStyle: TextStyle(color: Colors.grey.shade500),
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery = "";
+                        });
+                      },
+                    )
+                  : null,
               filled: true,
               fillColor: Colors.white,
               contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -139,15 +449,22 @@ class _PatientsComponentState extends State<PatientsComponent> {
 
   Widget _buildCurrentTabList() {
     // We reuse the SAME component, just pass different data
+    List<AppointmentModel> appointments;
+    
     switch (selectedTab) {
       case 0:
-        return PatientAppointmentList(appointments: _allAppointments);
+        appointments = _getFilteredAppointments(_allAppointments);
+        break;
       case 1:
-        return PatientAppointmentList(appointments: _recentAppointments);
+        appointments = _getFilteredAppointments(_recentAppointments);
+        break;
       case 2:
-        return PatientAppointmentList(appointments: _upcomingAppointments);
+        appointments = _getFilteredAppointments(_upcomingAppointments);
+        break;
       default:
-        return PatientAppointmentList(appointments: _allAppointments);
+        appointments = _getFilteredAppointments(_allAppointments);
     }
+
+    return PatientAppointmentList(appointments: appointments);
   }
 }
