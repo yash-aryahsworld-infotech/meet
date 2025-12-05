@@ -24,6 +24,7 @@ import 'package:healthcare_plus/Screens/Patient/prescriptions.dart';
 import 'package:healthcare_plus/Screens/Patient/privacy_and_consent.dart';
 import 'package:healthcare_plus/Screens/Patient/profile_component.dart';
 import 'package:healthcare_plus/Screens/Patient/security.dart';
+import 'package:healthcare_plus/Screens/Patient/specialty_grid.dart';
 import 'package:healthcare_plus/Screens/Patient/upload_documents.dart';
 import 'package:healthcare_plus/Screens/Patient/wallet.dart';
 import 'package:healthcare_plus/Screens/Patient/wellness.dart';
@@ -77,6 +78,11 @@ final List<SidebarItem> patientSidebar = [
     title: 'Book Consultation',
     route: '/bookconsultation',
     page: BookConsultation(),
+  ), SidebarItem(
+    icon: Icons.dashboard,
+    title: 'Speciality Grid',
+    route: '/specialitygrid',
+    page: DoctorDiscoveryPage(),
   ),  SidebarItem(
     icon: Icons.medical_services_outlined,
     title: 'Doctors',
