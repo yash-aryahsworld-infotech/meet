@@ -1,8 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
-
+import  './reschedule_appoinment.dart';
 // Wrapper Widget
 class AppointmentList extends StatelessWidget {
   final List<Map<String, dynamic>> appointments;
@@ -42,7 +41,6 @@ class AppointmentList extends StatelessWidget {
 // Single Card Widget
 class AppointmentCard extends StatelessWidget {
   final Map<String, dynamic> appointment;
-  final VoidCallback? onCancel; 
 
   const AppointmentCard({super.key, required this.appointment});
 
@@ -172,27 +170,27 @@ class AppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isUpcoming = appointment['isUpcoming'] ?? false;
-    final String type = appointment['type'] ?? "Clinic";
+    final String type = appointment['type'] ?? "Clinic"; // Default to Clinic if null
     final bool isOnline = type == "Online";
     final String? imagePath = appointment['image'];
     final String? cancellationReason = appointment['cancellationReason'];
     final String? cancelledBy = appointment['cancelledBy'];
     final bool isCancelled = appointment['status'] == 'cancelled';
 
-    // Styling
+    // Styling Logic
     Color typeColor = isOnline ? Colors.green.shade700 : Colors.purple.shade700;
     Color typeBg = isOnline ? Colors.green.shade50 : Colors.purple.shade50;
     IconData typeIcon = isOnline ? Icons.videocam : Icons.location_on;
     String typeText = isOnline ? "Online Consultant" : "Clinic Visit";
 
-    // Fallback Image
-    ImageProvider imgProvider;
+    // Image Provider Logic
+    ImageProvider? imgProvider;
     if (imagePath != null && imagePath.isNotEmpty) {
-      imgProvider = NetworkImage(imagePath);
-    } else {
-      // Generate UI Avatar
-      final safeName = Uri.encodeComponent(name);
-      imgProvider = NetworkImage("https://ui-avatars.com/api/?name=$safeName&background=random");
+      if (imagePath.startsWith('http')) {
+        imgProvider = NetworkImage(imagePath);
+      } else {
+        imgProvider = AssetImage(imagePath);
+      }
     }
 
     return Container(
@@ -415,7 +413,20 @@ class AppointmentCard extends StatelessWidget {
                       // 2. Reschedule
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true, // Allow sheet to take up more height
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) => SizedBox(
+                            // Limit height to 85% of screen
+                            height: MediaQuery.of(context).size.height * 0.85,
+                            child: RescheduleBottomSheet(appointment: appointment),
+                          ),
+                        );
+                      },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.grey.shade700,
                             side: BorderSide(color: Colors.grey.shade300),
@@ -463,7 +474,57 @@ class AppointmentCard extends StatelessWidget {
                   ),
                 ],
               )
-            ]
+            else
+              // ---------------- PAST LAYOUT ----------------
+              Row(
+                children: [
+                  // 1. Receipt
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black87,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text("Receipt", style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 2. Prescription
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue.shade700,
+                        backgroundColor: Colors.blue.shade50,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text("Prescription", style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 3. Book Again
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text("Book Again", style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

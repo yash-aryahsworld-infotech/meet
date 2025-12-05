@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import './healthcare_filters.dart';
@@ -12,7 +12,6 @@ class OnlineConsultantPage extends StatefulWidget {
 }
 
 class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
   String _selectedFilter = "All";
   String _searchQuery = "";
   bool _isLoading = true;
@@ -121,27 +120,43 @@ class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Component height logic (Assuming parent handles safe area/bounds)
+    // 1. FILTER LOGIC
+    final filteredDoctors = _doctors.where((doctor) {
+      final matchesFilter = _selectedFilter == "All" || doctor['specialty'] == _selectedFilter;
+      final searchLower = _searchQuery.toLowerCase();
+      final matchesSearch = doctor['name'].toString().toLowerCase().contains(searchLower) ||
+                            doctor['specialty'].toString().toLowerCase().contains(searchLower);
+      return matchesFilter && matchesSearch;
+    }).toList();
+
+    // 2. HEIGHT CALCULATION (Prevents Rendering Issues)
     double contentHeight = MediaQuery.of(context).size.height * 0.75;
 
+    // 3. MAIN UI (No Tabs)
     return SizedBox(
       height: contentHeight,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Search Bar
             TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
-                hintText: "Search doctor...",
+                hintText: "Search doctor, specialty...",
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 15),
 
+            // Filters
             HealthcareFilters(
               filters: _filters,
               selectedFilter: _selectedFilter,
@@ -149,6 +164,7 @@ class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
             ),
             const SizedBox(height: 20),
 
+            // Doctor List
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())

@@ -1,4 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +13,6 @@ class Appointments extends StatefulWidget {
 }
 
 class _AppointmentsState extends State<Appointments> {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
-  String? _currentUserKey;
   int _selectedTab = 0;
   bool _isLoading = true;
   String? _patientId;
@@ -209,129 +206,64 @@ class _AppointmentsState extends State<Appointments> {
 
     return Material(
       color: Colors.grey.shade50,
-      child: StreamBuilder(
-        // UPDATED QUERY: Fetch all_appointments where patientId matches current user
-        stream: _dbRef
-            .child("healthcare/all_appointments")
-            .orderByChild("patientId")
-            .equalTo(_currentUserKey)
-            .onValue,
-        builder: (context, snapshot) {
-          // --- 1. Loading ---
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // --- 2. Data Parsing ---
-          List<Map<String, dynamic>> upcomingList = [];
-          List<Map<String, dynamic>> pastList = [];
-
-          if (snapshot.hasData && snapshot.data!.snapshot.value != null) {
-            final dataMap = Map<dynamic, dynamic>.from(snapshot.data!.snapshot.value as Map);
-            
-            dataMap.forEach((key, value) {
-              final raw = Map<String, dynamic>.from(value);
-              
-              // Normalize Data Keys for the UI
-              final booking = {
-                "id": key, // The appointmentId
-                "doctorId": raw['doctorId'],
-                "name": raw['doctorName'] ?? "Doctor",
-                "specialty": raw['specialty'] ?? "Specialist",
-                "image": null, 
-                "type": raw['type'] ?? "Consultation",
-                "date": raw['date'], // Using new flat key 'date'
-                "time": raw['time'], // Using new flat key 'time'
-                "isUpcoming": false, 
-              };
-
-              // Safely parse date
-              final DateTime apptDate = _parseDate(booking['date']);
-              final DateTime now = DateTime.now().subtract(const Duration(days: 1)); // Include today
-
-              if (apptDate.isAfter(now)) {
-                booking['isUpcoming'] = true;
-                upcomingList.add(booking);
-              } else {
-                booking['isUpcoming'] = false;
-                pastList.add(booking);
-              }
-            });
-
-            // Sort
-            upcomingList.sort((a, b) => a['date'].compareTo(b['date']));
-            pastList.sort((a, b) => b['date'].compareTo(a['date']));
-          }
-
-          // --- 3. Build UI ---
-          return SingleChildScrollView(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: pageMaxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ---------------- HEADER ----------------
-                    PageHeader(
-                      title: "My Appointments",
-                      subtitle: "Manage your healthcare appointments",
-                      button1Icon: Icons.add,
-                      button1Text: "Book Appointment",
-                      button1OnPressed: () {
-                        // Navigate to booking page or show sheet
-                      },
-                      padding: const EdgeInsets.only(bottom: 20, top: 20, left: 16, right: 16),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // ---------------- TABS ----------------
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: TabToggle(
-                        options: _tabs,
-                        counts: [
-                          upcomingList.length,
-                          pastList.length,
-                          0
-                        ],
-                        selectedIndex: _selectedTab,
-                        onSelected: (i) => setState(() => _selectedTab = i),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // ---------------- TAB CONTENT ----------------
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildTabContent(upcomingList, pastList),
-                    ),
-
-                    const SizedBox(height: 80),
-                  ],
+      child: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: pageMaxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ---------------- HEADER ----------------
+                PageHeader(
+                  title: "My Appointments",
+                  subtitle: "Manage your healthcare appointments",
+                  button1Icon: Icons.add,
+                  button1Text: "Book Appointment",
+                  button1OnPressed: () {},
+                  padding: const EdgeInsets.only(bottom: 20),
                 ),
-              ),
+
+                const SizedBox(height: 10),
+
+                // ---------------- TABS ----------------
+                TabToggle(
+                  options: _tabs,
+                  counts: [
+                    _upcomingAppointments.length,
+                    _pastAppointments.length,
+                    0
+                  ],
+                  selectedIndex: _selectedTab,
+                  onSelected: (i) => setState(() => _selectedTab = i),
+                ),
+
+                const SizedBox(height: 30),
+
+                // ---------------- TAB CONTENT ----------------
+                _buildTabContent(),
+
+                const SizedBox(height: 80),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildTabContent(List<Map<String, dynamic>> upcoming, List<Map<String, dynamic>> past) {
+  Widget _buildTabContent() {
     switch (_selectedTab) {
       case 0:
+        // ⭐ Use the new Widget
         return AppointmentList(
-          appointments: upcoming,
+          appointments: _upcomingAppointments,
           emptyMsg: "No upcoming appointments.",
-          onCancel: _showCancelDialog, 
         );
       case 1:
+        // ⭐ Reuse the new Widget
         return AppointmentList(
-          appointments: past,
+          appointments: _pastAppointments,
           emptyMsg: "No past appointments.",
-          // No cancel for past items
         );
       case 2:
         return _buildCalendarView();
@@ -343,30 +275,18 @@ class _AppointmentsState extends State<Appointments> {
   Widget _buildCalendarView() {
     return Container(
       width: double.infinity,
-      height: 300,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_month, size: 48, color: Colors.grey.shade300),
-            const SizedBox(height: 10),
-            Text("Calendar View", style: TextStyle(color: Colors.grey.shade500)),
-          ],
-        ),
-      ),
+      child: const Center(child: Text("Calendar Widget Placeholder")),
     );
   }
 }
 
-// ---------------------------------------------------------
-// REUSABLE WIDGETS
-// ---------------------------------------------------------
+
 
 extension StringExtension on String {
   String capitalize() {

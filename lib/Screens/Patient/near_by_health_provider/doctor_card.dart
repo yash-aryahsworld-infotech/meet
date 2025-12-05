@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
+import './doctor_details_page.dart'; // Import the new page
 import './booking_bottom_sheet.dart'; 
 
 class DoctorCard extends StatelessWidget {
   final Map<String, dynamic> doctor;
-  final String? patientUserKey;
 
-  const DoctorCard({super.key, required this.doctor, required this.patientUserKey});
+  const DoctorCard({super.key, required this.doctor});
+
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return AssetImage(imagePath);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Robust Data Extraction
-    final String fullName = doctor['name'] ?? "Dr. ${doctor['firstName']} ${doctor['lastName']}";
-    final String specialty = doctor['specialty'] ?? doctor['displaySpecialty'] ?? "Specialist";
-    final String fee = doctor['price']?.toString() ?? doctor['consultationFee']?.toString() ?? "0";
-    final String exp = doctor['experience']?.toString() ?? doctor['experienceYears']?.toString() ?? "0";
-    
-    final imgUrl = doctor['image'] ?? "";
-    final ImageProvider imageProvider = (imgUrl.startsWith('http'))
-        ? NetworkImage(imgUrl)
-        : const NetworkImage("https://ui-avatars.com/api/?background=random");
-
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),
@@ -44,7 +41,7 @@ class DoctorCard extends StatelessWidget {
                   children: [
                     // Profile Image
                     Hero(
-                      tag: doctor['image'], // Animation Tag
+                      tag: 'doctor_${doctor['userKey'] ?? doctor['id'] ?? doctor['name']}_${doctor['image']}', // Unique Animation Tag
                       child: CircleAvatar(
                         radius: 32,
                         backgroundImage: _getImageProvider(doctor['image']),
@@ -78,7 +75,36 @@ class DoctorCard extends StatelessWidget {
                               const SizedBox(width: 2),
                               Text("${doctor['rating']}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                             ],
-                          )
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.language, size: 14, color: Colors.blue.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Builder(
+                                  builder: (context) {
+                                    final languages = doctor['languages'];
+                                    if (languages == null || (languages is List && languages.isEmpty)) {
+                                      return const Text(
+                                        'Languages not specified',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                                      );
+                                    }
+                                    final langList = languages as List;
+                                    final displayText = langList.take(3).join(', ') + 
+                                      (langList.length > 3 ? ' +${langList.length - 3}' : '');
+                                    return Text(
+                                      displayText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Colors.blue.shade700, fontWeight: FontWeight.w600),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -99,33 +125,35 @@ class DoctorCard extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 10),
             
-            // --- BOOK BUTTON ---
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // 1. Check if user is logged in
-                  if (patientUserKey == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please login to book an appointment"))
+            // --- BOOK BUTTON (Remains Same) ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    children: (doctor['durations'] as List).map<Widget>((d) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.grey.shade300)),
+                        child: Text(d, style: const TextStyle(fontSize: 11, color: Colors.black87)),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                      builder: (context) => BookingBottomSheet(doctor: doctor),
                     );
-                    return;
-                  }
-
-                  // 2. Open Sheet
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                    builder: (context) => BookingBottomSheet(
-                      doctor: doctor, 
-                      patientKey: patientUserKey! // Safe because of check above
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                child: const Text("Book Appointment", style: TextStyle(color: Colors.white)),
-              ),
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0), visualDensity: VisualDensity.compact, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  child: const Text("Book Now", style: TextStyle(color: Colors.white, fontSize: 13)),
+                ),
+              ],
             )
           ],
         ),

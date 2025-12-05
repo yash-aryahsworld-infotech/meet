@@ -125,7 +125,9 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
   }
 
   void _makePhoneCall(String phoneNumber) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Calling $phoneNumber...")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Calling $phoneNumber...")),
+    );
   }
 
   @override
@@ -136,7 +138,8 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
       final matchesFilter = _selectedFilter == "All" || doctor['specialty'] == _selectedFilter;
       final searchLower = _searchQuery.toLowerCase();
       final matchesSearch = doctor['name'].toString().toLowerCase().contains(searchLower) ||
-                            doctor['specialty'].toString().toLowerCase().contains(searchLower);
+                            doctor['specialty'].toString().toLowerCase().contains(searchLower) ||
+                            doctor['address'].toString().toLowerCase().contains(searchLower);
       return matchesFilter && matchesSearch;
     }).toList();
 
@@ -149,7 +152,7 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
             TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
-                hintText: "Search clinic...",
+                hintText: "Search doctor, clinic, location...",
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
@@ -193,14 +196,12 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // --- CLICKABLE PROFILE SECTION ---
             GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => DoctorDetailsPage(
-                    doctor: doctor,
-                    patientUserKey: _currentUserKey, // Pass user key
-                  )),
+                  MaterialPageRoute(builder: (context) => DoctorDetailsPage(doctor: doctor)),
                 );
               },
               child: Container(
@@ -217,6 +218,7 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                       ),
                     ),
                     const SizedBox(width: 15),
+                    
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,16 +228,9 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                           Text(doctor['specialty'], style: TextStyle(color: Colors.blue.shade700, fontSize: 13)),
                           const SizedBox(height: 6),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Icon(Icons.location_on, size: 14, color: Colors.grey.shade600),
-                              const SizedBox(width: 4),
-                              Expanded(child: Text(doctor['address'], maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(Icons.language, size: 14, color: Colors.blue.shade600),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -279,6 +274,7 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                         ],
                       ),
                     ),
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -295,6 +291,7 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
                         ),
                         const SizedBox(height: 8),
                         Text("₹${doctor['price']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
+                        const Text("Consultation", style: TextStyle(fontSize: 10, color: Colors.grey)),
                       ],
                     ),
                   ],
@@ -305,35 +302,47 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
             const Divider(height: 1),
             const SizedBox(height: 10),
 
+            // --- ACTION BUTTONS (Call + Book) ---
             Row(
               children: [
+                // Call Button (Small)
                 SizedBox(
                   width: 50,
                   height: 45,
                   child: ElevatedButton(
                     onPressed: () => _makePhoneCall(doctor['phone']),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade50, padding: EdgeInsets.zero, elevation: 0),
-                    child: const Icon(Icons.call, size: 22, color: Colors.green),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade50,
+                      foregroundColor: Colors.green,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: const Icon(Icons.call, size: 22),
                   ),
                 ),
                 const SizedBox(width: 10),
+
+                // Book Appointment Button (Big)
                 Expanded(
                   child: SizedBox(
                     height: 45,
                     child: ElevatedButton(
                       onPressed: () {
-                        if (_currentUserKey == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please login first")));
-                          return;
-                        }
+                        // --- UPDATED: Open Booking Bottom Sheet ---
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                          builder: (context) => BookingBottomSheet(doctor: doctor, patientKey: _currentUserKey!),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) => BookingBottomSheet(doctor: doctor),
                         );
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
                       child: const Text("Book Appointment", style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                     ),
                   ),
