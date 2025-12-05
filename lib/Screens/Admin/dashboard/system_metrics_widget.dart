@@ -30,10 +30,10 @@ class SystemMetricsWidget extends StatelessWidget {
   final List<SecurityCheckItem> checklist;
 
   const SystemMetricsWidget({
-    Key? key,
+    super.key,
     required this.metrics,
     required this.checklist,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

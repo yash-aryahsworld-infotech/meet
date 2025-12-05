@@ -229,7 +229,7 @@ class _SecurityState extends State<Security> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.02),
+            color: Colors.black12.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -315,7 +315,7 @@ class _SecurityState extends State<Security> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFF3B82F6),
+          activeThumbColor: const Color(0xFF3B82F6),
         ),
       ],
     );
@@ -340,7 +340,7 @@ class _SecurityState extends State<Security> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6).withOpacity(0.5), // Very light grey/blue
+        color: const Color(0xFFF3F4F6).withValues(alpha: 0.5), // Very light grey/blue
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade200),
       ),

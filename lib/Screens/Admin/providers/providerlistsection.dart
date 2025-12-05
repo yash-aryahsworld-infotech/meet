@@ -51,11 +51,11 @@ class _ProviderListSectionState extends State<ProviderListSection> {
   // --- Handlers ---
   void _handleApprove(Provider p) {
     // API Call logic here
-    print("Approved ${p.name}");
+    // Approved provider
   }
 
   void _handleReject(Provider p) {
-    print("Rejected ${p.name}");
+    // Rejected provider
   }
 
   @override

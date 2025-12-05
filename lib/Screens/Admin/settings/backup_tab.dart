@@ -9,8 +9,8 @@ class BackupMaintenanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Controllers initialized with the values from the image
-    final TextEditingController _backupFreqController = TextEditingController(text: "daily");
-    final TextEditingController _retentionController = TextEditingController(text: "90");
+    final TextEditingController backupFreqController = TextEditingController(text: "daily");
+    final TextEditingController retentionController = TextEditingController(text: "90");
 
     return Card(
       elevation: 2,
@@ -36,7 +36,7 @@ class BackupMaintenanceCard extends StatelessWidget {
             // Backup Frequency Input
             LabeledTextField(
               label: "Backup Frequency",
-              controller: _backupFreqController,
+              controller: backupFreqController,
             ),
             
             const SizedBox(height: 16),
@@ -44,7 +44,7 @@ class BackupMaintenanceCard extends StatelessWidget {
             // Data Retention Input
             LabeledTextField(
               label: "Data Retention Period (days)",
-              controller: _retentionController,
+              controller: retentionController,
             ),
 
             const SizedBox(height: 24),

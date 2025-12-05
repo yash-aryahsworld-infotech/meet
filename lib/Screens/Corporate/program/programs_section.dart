@@ -141,8 +141,9 @@ class _ProgramsSectionState extends State<ProgramsSection> {
                           value: _selectedCategory,
                           items: _categoryOptions,
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => _selectedCategory = val);
+                            }
                           },
                         ),
                       ),
@@ -152,8 +153,9 @@ class _ProgramsSectionState extends State<ProgramsSection> {
                           value: _selectedStatus,
                           items: _statusOptions,
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => _selectedStatus = val);
+                            }
                           },
                         ),
                       ),
@@ -172,8 +174,9 @@ class _ProgramsSectionState extends State<ProgramsSection> {
                       value: _selectedCategory,
                       items: _categoryOptions,
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(() => _selectedCategory = val);
+                        }
                       },
                     ),
                   ),

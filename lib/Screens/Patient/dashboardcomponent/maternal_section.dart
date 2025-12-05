@@ -79,7 +79,7 @@ class _MaternalSectionState extends State<MaternalSection> {
             border: Border.all(color: Colors.grey.shade300),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.05),
+                color: Colors.grey.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
@@ -192,7 +192,7 @@ class _MaternalSectionState extends State<MaternalSection> {
         SizedBox(
           height: 48,
           child: DropdownButtonFormField<String>(
-            value: _selectedStage,
+            initialValue: _selectedStage,
             decoration: _decoration(),
             items: ['Prenatal', 'Postnatal', 'Trying to Conceive']
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))

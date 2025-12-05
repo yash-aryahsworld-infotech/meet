@@ -27,10 +27,10 @@ class SecurityMonitorWidget extends StatefulWidget {
   final VoidCallback? onRefresh;
 
   const SecurityMonitorWidget({
-    Key? key, 
+    super.key, 
     required this.logs, 
     this.onRefresh,
-  }) : super(key: key);
+  });
 
   @override
   State<SecurityMonitorWidget> createState() => _SecurityMonitorWidgetState();
@@ -142,7 +142,7 @@ class _SecurityMonitorWidgetState extends State<SecurityMonitorWidget> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _getLevelColor(log.level).withOpacity(0.1),
+                              color: _getLevelColor(log.level).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(

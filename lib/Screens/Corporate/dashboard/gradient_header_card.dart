@@ -57,7 +57,7 @@ class GradientHeaderCard extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: isMobile ? 12 : 14,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -72,7 +72,7 @@ class GradientHeaderCard extends StatelessWidget {
                 rightLabel,
                 style: TextStyle(
                   fontSize: isMobile ? 12 : 14,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
               const SizedBox(height: 4),

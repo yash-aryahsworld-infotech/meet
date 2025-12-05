@@ -43,6 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _writeToDB() async {
     await _dbRef.set({"value": _isTrue});
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('✅ Value written: $_isTrue'),

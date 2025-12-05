@@ -8,13 +8,13 @@ class SearchAndFilters extends StatelessWidget {
   final ValueChanged<String?> onStatusChanged;
 
   const SearchAndFilters({
-    Key? key,
+    super.key,
     required this.onSearchChanged,
     required this.selectedRole,
     required this.onRoleChanged,
     required this.selectedStatus,
     required this.onStatusChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

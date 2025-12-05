@@ -128,7 +128,7 @@ class HeartBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()..color = const Color(0xFFD32F2F)..style = PaintingStyle.fill;
-    Paint shadowPaint = Paint()..color = Colors.redAccent.withOpacity(0.5)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    Paint shadowPaint = Paint()..color = Colors.redAccent.withValues(alpha: 0.5)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
 
     Path path = Path();
     path.moveTo(size.width / 2, size.height * 0.3);
@@ -181,7 +181,7 @@ class _HeartbeatBannerState extends State<HeartbeatBanner> {
                   height: heartSize + (50 * value),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.red.withOpacity(0.3 * (1.0 - value)), 
+                    color: Colors.red.withValues(alpha: 0.3 * (1.0 - value)), 
                   ),
                 );
               },

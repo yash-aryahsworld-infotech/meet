@@ -28,10 +28,10 @@ class RiskDistributionCard extends StatelessWidget {
             "Low Risk", 0.74, "145 employees (74%)", const Color(0xFF2563EB)),
         const SizedBox(height: 24),
         _buildRiskItem("Medium Risk", 0.18, "35 employees (18%)",
-            const Color(0xFF2563EB).withOpacity(0.7)),
+            const Color(0xFF2563EB).withValues(alpha: 0.7)),
         const SizedBox(height: 24),
         _buildRiskItem("High Risk", 0.08, "15 employees (8%)",
-            const Color(0xFF2563EB).withOpacity(0.4)),
+            const Color(0xFF2563EB).withValues(alpha: 0.4)),
       ]),
     );
   }

@@ -116,8 +116,8 @@ class _GeneralConfigurationCardState extends State<GeneralConfigurationCard> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.blue,
-            activeTrackColor: Colors.blue.withOpacity(0.4),
+            activeThumbColor: Colors.blue,
+            activeTrackColor: Colors.blue.withValues(alpha: 0.4),
           ),
         ],
       ),

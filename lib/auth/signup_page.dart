@@ -115,6 +115,8 @@ class _SignUpFormState extends State<SignUpForm> {
 
       setState(() => _isLoading = false);
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Account created successfully!"),

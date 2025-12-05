@@ -67,7 +67,7 @@ class _QuickActionsSectionState extends State<QuickActionsSection> {
               onTapCancel: () => onPressed(false),
 
               onTap: () {
-                print("$title clicked");
+                // Action: $title clicked
               },
 
               child: Padding(

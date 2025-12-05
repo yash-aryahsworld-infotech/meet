@@ -149,7 +149,7 @@ class _PrivacyAndConsentState extends State<PrivacyAndConsent>
                             data: data,
                             onChanged: (val) => _toggleConsent(index),
                           );
-                        }).toList(),
+                        }),
 
                         const SizedBox(height: 24),
 

@@ -113,11 +113,11 @@ class AdminDashboard extends StatelessWidget {
 
   // --- 4. QUICK ACTIONS DATA (Fixed Initialization) ---
   final List<QuickActionItem> actions = [
-    QuickActionItem("Manage Users", Icons.people_outline, () => print("Manage Users")),
-    QuickActionItem("Review Providers", Icons.assignment_ind_outlined, () => print("Review Providers")),
-    QuickActionItem("Security Scan", Icons.security_outlined, () => print("Scan")),
-    QuickActionItem("Database Backup", Icons.backup_outlined, () => print("Backup")),
-    QuickActionItem("System Health Check", Icons.monitor_heart_outlined, () => print("Health Check")),
+    QuickActionItem("Manage Users", Icons.people_outline, () {}),
+    QuickActionItem("Review Providers", Icons.assignment_ind_outlined, () {}),
+    QuickActionItem("Security Scan", Icons.security_outlined, () {}),
+    QuickActionItem("Database Backup", Icons.backup_outlined, () {}),
+    QuickActionItem("System Health Check", Icons.monitor_heart_outlined, () {}),
   ];
 
   // --- 5. ACTIVITIES DATA ---
