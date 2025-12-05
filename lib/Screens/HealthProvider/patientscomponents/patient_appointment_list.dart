@@ -304,142 +304,138 @@ class PatientAppointmentList extends StatelessWidget {
           // ---------------- Divider ----------------
           Divider(height: 1, color: Colors.grey.shade100),
 
-          // ---------------- Bottom Section: Time & Action ----------------
+          // ---------------- Bottom Section: Time & Action Buttons ----------------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  // Booking Time
-                  Icon(Icons.calendar_today_outlined, size: 16, color: Colors.blue.shade400),
-                  const SizedBox(width: 6),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 120),
-                    child: Text(
-                      data.time,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                // Booking Time
+                Icon(Icons.calendar_today_outlined, size: 16, color: Colors.blue.shade400),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    data.time,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  
-                  const SizedBox(width: 8),
-
-                  // Documents Button
-                  SizedBox(
-                    height: 36,
-                    width: 36,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DoctorDocumentsViewer(
-                              appointmentId: data.appointmentId ?? '',
-                              patientName: data.name,
-                            ),
+                ),
+                
+                // Documents Button
+                SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DoctorDocumentsViewer(
+                            appointmentId: data.appointmentId ?? '',
+                            patientName: data.name,
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange.shade50,
-                        foregroundColor: Colors.orange,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: EdgeInsets.zero,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade50,
+                      foregroundColor: Colors.orange,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.folder_open, size: 18),
+                      padding: EdgeInsets.zero,
                     ),
+                    child: const Icon(Icons.folder_open, size: 18),
                   ),
-                  const SizedBox(width: 8),
+                ),
+                const SizedBox(width: 8),
 
-                  // Chat Button
-                  SizedBox(
-                    height: 36,
-                    width: 36,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatScreen(
-                              appointmentId: data.appointmentId ?? '',
-                              patientId: data.patientId ?? '',
-                              patientName: data.name,
-                              doctorId: '', // Will be set from SharedPreferences in ChatScreen
-                              doctorName: '', // Will be set from SharedPreferences in ChatScreen
-                              isDoctor: true,
-                            ),
+                // Chat Button
+                SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            appointmentId: data.appointmentId ?? '',
+                            patientId: data.patientId ?? '',
+                            patientName: data.name,
+                            doctorId: '', // Will be set from SharedPreferences in ChatScreen
+                            doctorName: '', // Will be set from SharedPreferences in ChatScreen
+                            isDoctor: true,
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade50,
-                        foregroundColor: Colors.green,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: EdgeInsets.zero,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade50,
+                      foregroundColor: Colors.green,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.chat_bubble_outline, size: 18),
+                      padding: EdgeInsets.zero,
                     ),
+                    child: const Icon(Icons.chat_bubble_outline, size: 18),
                   ),
-                  const SizedBox(width: 8),
+                ),
+                const SizedBox(width: 8),
 
-                  // Cancel Button
-                  SizedBox(
-                    height: 36,
-                    width: 36,
-                    child: ElevatedButton(
-                      onPressed: () => _cancelAppointment(context, data),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.zero,
+                // Cancel Button
+                SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: ElevatedButton(
+                    onPressed: () => _cancelAppointment(context, data),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.cancel_outlined, size: 18),
+                      padding: EdgeInsets.zero,
                     ),
+                    child: const Icon(Icons.cancel_outlined, size: 18),
                   ),
-                  const SizedBox(width: 8),
+                ),
+              ],
+            ),
+          ),
 
-                  // Video Call Button
-                  SizedBox(
-                    height: 36,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Handle video call action
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Starting video call with ${data.name}...")),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue, // Primary color
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      icon: const Icon(Icons.videocam_outlined, size: 18),
-                      label: const Text(
-                        "Video Call",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                    ),
+          // ---------------- Video Call Button (Full Width) ----------------
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // Handle video call action
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Starting video call with ${data.name}...")),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                ),
+                icon: const Icon(Icons.videocam, size: 20),
+                label: const Text(
+                  "Start Video Call",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),

@@ -1,3 +1,4 @@
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
@@ -156,7 +157,10 @@ class _RescheduleBottomSheetState extends State<RescheduleBottomSheet> {
   void _processTimeRange(dynamic range, DateTime selectedDate) {
     final String startStr = range['start'] ?? "09:00";
     final String endStr = range['end'] ?? "17:00";
-    final int duration = int.tryParse(range['slotDuration']?.toString() ?? "30") ?? 30;
+    final slotDurationValue = range['slotDuration'];
+    final int duration = (slotDurationValue is int) 
+        ? slotDurationValue 
+        : (int.tryParse(slotDurationValue?.toString() ?? "30") ?? 30);
 
     int currentMins = _timeToMinutes(startStr);
     int endMins = _timeToMinutes(endStr);
@@ -202,31 +206,45 @@ class _RescheduleBottomSheetState extends State<RescheduleBottomSheet> {
     
     setState(() => _isRescheduling = true);
 
-    final String apptId = widget.appointment['id'];
-    final String doctorId = widget.appointment['doctorId'];
+    final String apptId = widget.appointment['appointmentId'] ?? widget.appointment['id'] ?? '';
+    final String doctorId = widget.appointment['doctorId'] ?? '';
     
-    // Old Data
-    final String oldDate = widget.appointment['date'];
-    final String oldTime = widget.appointment['time'];
+    if (apptId.isEmpty || doctorId.isEmpty) {
+      if (mounted) {
+        setState(() => _isRescheduling = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Missing appointment information"), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    
+    // Old Data - parse the date from ISO string if needed
+    String oldDate = widget.appointment['date'] ?? '';
+    if (oldDate.contains('T')) {
+      // If it's an ISO string, extract just the date part
+      oldDate = oldDate.split('T')[0];
+    }
+    final String oldTime = widget.appointment['time'] ?? '';
     
     // New Data
-    // UPDATED: Use manual helper instead of Intl
     final String newDate = _formatDateForDB(_dates[_selectedDateIndex]);
     final String newTime = _selectedTimeSlot!;
 
     try {
-      // 1. Remove Old Slot from booked_slots
-      await _dbRef.child("healthcare/booked_slots/$doctorId/$oldDate/$oldTime").remove();
+      // 1. Remove Old Slot from booked_slots (if old date/time exists)
+      if (oldDate.isNotEmpty && oldTime.isNotEmpty) {
+        await _dbRef.child("healthcare/booked_slots/$doctorId/$oldDate/$oldTime").remove();
+      }
 
       // 2. Add New Slot to booked_slots
       await _dbRef.child("healthcare/booked_slots/$doctorId/$newDate/$newTime").set(true);
 
       // 3. Update Master Appointment Record
       await _dbRef.child("healthcare/all_appointments/$apptId").update({
-        "date": newDate,
+        "date": DateTime.parse(newDate).toIso8601String(), // Store as ISO string for consistency
         "time": newTime,
-        // Optional: Add an updated timestamp so backend knows it changed
-        "updatedAt": ServerValue.timestamp, 
+        "updatedAt": DateTime.now().toIso8601String(),
       });
 
       if (mounted) {
@@ -238,7 +256,9 @@ class _RescheduleBottomSheetState extends State<RescheduleBottomSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isRescheduling = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
       }
     }
   }

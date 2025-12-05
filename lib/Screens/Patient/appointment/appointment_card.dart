@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
-import  './reschedule_appoinment.dart';
+import 'package:healthcare_plus/Screens/Patient/appointment/reschedule_appoinment.dart';
+
 // Wrapper Widget
 class AppointmentList extends StatelessWidget {
   final List<Map<String, dynamic>> appointments;
@@ -413,7 +414,7 @@ class AppointmentCard extends StatelessWidget {
                       // 2. Reschedule
                       Expanded(
                         child: OutlinedButton(
-                      onPressed: () {
+                          onPressed: () {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true, // Allow sheet to take up more height

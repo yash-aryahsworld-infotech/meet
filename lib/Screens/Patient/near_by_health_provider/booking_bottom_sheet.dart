@@ -20,6 +20,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   String? _selectedProfileName;
   List<Map<String, dynamic>> _profiles = [];
   bool _loadingProfiles = true;
+  bool _loadingAvailability = true;
 
   // Generate next 7 days dynamically
   final List<DateTime> _dates = List.generate(
@@ -27,14 +28,15 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     (index) => DateTime.now().add(Duration(days: index))
   );
 
-  // Mock Time Slots
-  final List<String> _morningSlots = ["09:00 AM", "09:30 AM", "10:00 AM", "11:15 AM"];
-  final List<String> _afternoonSlots = ["02:00 PM", "03:45 PM", "04:30 PM", "06:00 PM"];
+  // Real availability data
+  Map<String, dynamic> _availability = {};
+  List<String> _availableTimeSlots = [];
 
   @override
   void initState() {
     super.initState();
     _loadProfiles();
+    _loadDoctorAvailability();
   }
 
   Future<void> _loadProfiles() async {
@@ -93,6 +95,85 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     } catch (e) {
       setState(() => _loadingProfiles = false);
     }
+  }
+
+  Future<void> _loadDoctorAvailability() async {
+    try {
+      final doctorId = widget.doctor['userKey'] ?? widget.doctor['id'];
+      if (doctorId == null) {
+        setState(() => _loadingAvailability = false);
+        return;
+      }
+
+      final snapshot = await FirebaseDatabase.instance
+          .ref("healthcare/users/providers/$doctorId/availability")
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          _availability = Map<String, dynamic>.from(snapshot.value as Map);
+          _loadingAvailability = false;
+          _generateTimeSlotsForSelectedDate();
+        });
+      } else {
+        setState(() => _loadingAvailability = false);
+      }
+    } catch (e) {
+      setState(() => _loadingAvailability = false);
+    }
+  }
+
+  void _generateTimeSlotsForSelectedDate() {
+    final selectedDate = _dates[_selectedDateIndex];
+    final dayName = _getDayNameFull(selectedDate.weekday);
+    
+    final slots = <String>[];
+    
+    if (_availability.containsKey(dayName)) {
+      final dayData = _availability[dayName];
+      final isActive = dayData['active'] ?? false;
+      
+      if (isActive && dayData['slots'] != null) {
+        final daySlots = dayData['slots'] as List;
+        
+        for (var slot in daySlots) {
+          final startTime = slot['start'] ?? '09:00';
+          final endTime = slot['end'] ?? '17:00';
+          final slotDuration = (slot['slotDuration'] ?? 30) as int;
+          
+          // Generate time slots based on duration
+          final startParts = startTime.split(':');
+          final endParts = endTime.split(':');
+          
+          int startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+          final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+          
+          while (startMinutes < endMinutes) {
+            final hour = startMinutes ~/ 60;
+            final minute = startMinutes % 60;
+            final timeStr = _formatTime(hour, minute);
+            slots.add(timeStr);
+            startMinutes += slotDuration;
+          }
+        }
+      }
+    }
+    
+    setState(() {
+      _availableTimeSlots = slots;
+      _selectedTimeIndex = -1; // Reset selection
+    });
+  }
+
+  String _getDayNameFull(int weekday) {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return days[weekday - 1];
+  }
+
+  String _formatTime(int hour, int minute) {
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
   }
 
   Future<void> _bookAppointment() async {
@@ -155,12 +236,15 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       }
 
       // Get selected time
-      String selectedTime = "";
-      if (_selectedTimeIndex < _morningSlots.length) {
-        selectedTime = _morningSlots[_selectedTimeIndex];
-      } else {
-        selectedTime = _afternoonSlots[_selectedTimeIndex - _morningSlots.length];
+      if (_selectedTimeIndex < 0 || _selectedTimeIndex >= _availableTimeSlots.length) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please select a time slot"), backgroundColor: Colors.red),
+          );
+        }
+        return;
       }
+      String selectedTime = _availableTimeSlots[_selectedTimeIndex];
 
       // Get selected date
       final selectedDate = _dates[_selectedDateIndex];
@@ -325,10 +409,13 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 final date = _dates[index];
                 final isSelected = _selectedDateIndex == index;
                 return GestureDetector(
-                  onTap: () => setState(() {
-                    _selectedDateIndex = index;
-                    _selectedTimeIndex = -1; // Reset time
-                  }),
+                  onTap: () {
+                    setState(() {
+                      _selectedDateIndex = index;
+                      _selectedTimeIndex = -1; // Reset time
+                    });
+                    _generateTimeSlotsForSelectedDate();
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -368,32 +455,36 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           const Text("Select Time Slot", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 10),
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Morning", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: List.generate(_morningSlots.length, (index) {
-                      return _buildTimeChip(index, _morningSlots[index]);
-                    }),
-                  ),
-                  const SizedBox(height: 15),
-                  const Text("Afternoon & Evening", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: List.generate(_afternoonSlots.length, (index) {
-                      return _buildTimeChip(index + _morningSlots.length, _afternoonSlots[index]);
-                    }),
-                  ),
-                ],
-              ),
-            ),
+            child: _loadingAvailability
+                ? const Center(child: CircularProgressIndicator())
+                : _availableTimeSlots.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_busy, size: 48, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            Text(
+                              "No slots available for this day",
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Please select another date",
+                              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: List.generate(_availableTimeSlots.length, (index) {
+                            return _buildTimeChip(index, _availableTimeSlots[index]);
+                          }),
+                        ),
+                      ),
           ),
 
           // 3. PAY BUTTON
