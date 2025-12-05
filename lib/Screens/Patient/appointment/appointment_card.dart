@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-
+import './reschedule_appoinment.dart';
 class AppointmentCard extends StatelessWidget {
   final Map<String, dynamic> appointment;
   final VoidCallback? onCancel; 
@@ -157,7 +157,20 @@ class AppointmentCard extends StatelessWidget {
                   // Reschedule (Visual only for now)
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true, // Allow sheet to take up more height
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) => SizedBox(
+                            // Limit height to 85% of screen
+                            height: MediaQuery.of(context).size.height * 0.85,
+                            child: RescheduleBottomSheet(appointment: appointment),
+                          ),
+                        );
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.grey.shade700,
                         side: BorderSide(color: Colors.grey.shade300),
@@ -181,7 +194,7 @@ class AppointmentCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text(
-                        isOnline ? "Join" : "Directions",
+                        isOnline ? "Join" : "Join",
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),
