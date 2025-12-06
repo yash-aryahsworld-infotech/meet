@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import './near_by_health_provider/doctor_card.dart';
 
-// ---- ICON HELPER ----
+// ---------------------------------------------------------
+// 🔥 ICON HELPER (WITH DUMMY ICONS + SAFE FALLBACK SYSTEM)
+// ---------------------------------------------------------
 class IconHelper {
   static final Map<String, IconData> specialtyIcons = {
     "Cardiologist": Icons.favorite,
@@ -11,16 +13,51 @@ class IconHelper {
     "Psychologist": Icons.psychology,
     "ENT": Icons.hearing,
     "Gynecologist": Icons.pregnant_woman,
-    "Dermatologist": Icons.face,
+    "Dermatologist": Icons.face_retouching_natural,
     "Pediatrician": Icons.child_care,
     "Neurologist": Icons.psychology_alt,
     "Orthopedic": Icons.accessibility_new,
     "Physician": Icons.local_hospital,
-    "General": Icons.person_add_alt,
+    "General": Icons.person,
+
+    // Dummy specializations with icons
+    "Nutritionist": Icons.spa,
+    "Homeopathy": Icons.eco,
+    "Ayurvedic": Icons.energy_savings_leaf,
+    "Eye Specialist": Icons.remove_red_eye,
+    "Cancer Specialist": Icons.coronavirus,
+    "Skin & Hair Specialist": Icons.face_3,
+    "Sexologist": Icons.favorite_border,
+    "Emergency Care": Icons.emergency,
   };
 
+  static final List<IconData> fallbackIcons = [
+    Icons.health_and_safety,
+    Icons.local_hospital,
+    Icons.medical_information,
+    Icons.person,
+    Icons.star,
+    Icons.shield,
+    Icons.spa,
+    Icons.vaccines,
+    Icons.healing,
+  ];
+
+  static final Map<String, IconData> assignedDynamicIcons = {};
+
   static IconData getIconForSpecialty(String name) {
-    return specialtyIcons[name] ?? Icons.local_hospital;
+    if (specialtyIcons.containsKey(name)) return specialtyIcons[name]!;
+
+    if (assignedDynamicIcons.containsKey(name)) {
+      return assignedDynamicIcons[name]!;
+    }
+
+    IconData newIcon =
+        fallbackIcons[assignedDynamicIcons.length % fallbackIcons.length];
+
+    assignedDynamicIcons[name] = newIcon;
+
+    return newIcon;
   }
 }
 
@@ -41,6 +78,25 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
   bool _loadingSpecialties = true;
   List<String> _specialtyList = [];
 
+  // Dummy categories to always display
+  final List<String> dummySpecialties = [
+    "Cardiologist",
+    "Dentist",
+    "Psychologist",
+    "ENT",
+    "Dermatologist",
+    "Physician",
+    "General",
+    "Nutritionist",
+    "Homeopathy",
+    "Ayurvedic",
+    "Eye Specialist",
+    "Cancer Specialist",
+    "Skin & Hair Specialist",
+    "Sexologist",
+    "Emergency Care",
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -54,10 +110,13 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
     setState(() {});
   }
 
-  // 🔥 Fetch specialties DIRECTLY from doctor data
+  // ---------------------------------------------------------
+  // 🔥 FETCH SPECIALTIES FROM FIREBASE + MERGE WITH DUMMY
+  // ---------------------------------------------------------
   Future<void> _fetchSpecialtiesFromDoctors() async {
     try {
-      final snapshot = await _dbRef.child("healthcare/users/providers").get();
+      final snapshot =
+          await _dbRef.child("healthcare/users/providers").get();
       Set<String> specialtiesSet = {};
 
       if (snapshot.exists) {
@@ -74,7 +133,12 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
         });
       }
 
-      _specialtyList = specialtiesSet.toList()..sort();
+      // Merge Firebase + dummy specialties
+      _specialtyList = {
+        ...specialtiesSet,
+        ...dummySpecialties,
+      }.toList()
+        ..sort();
 
       setState(() => _loadingSpecialties = false);
     } catch (e) {
@@ -94,7 +158,9 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---------------- SEARCH BAR ----------------
+            // ---------------------------------------------------------
+            // 🔍 SEARCH BAR
+            // ---------------------------------------------------------
             TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
@@ -122,14 +188,17 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
                   child: Text(
                     "View All",
                     style: TextStyle(
-                        color:
-                            _selectedFilter == "All" ? Colors.blue : Colors.grey),
+                        color: _selectedFilter == "All"
+                            ? Colors.blue
+                            : Colors.grey),
                   ),
                 )
               ],
             ),
 
-            // ---------------- SPECIALTY GRID ----------------
+            // ---------------------------------------------------------
+            // 🔥 SPECIALTY GRID
+            // ---------------------------------------------------------
             if (_loadingSpecialties)
               const Center(child: CircularProgressIndicator())
             else
@@ -161,9 +230,11 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
                                 ? Border.all(color: Colors.blue, width: 2)
                                 : null,
                           ),
-                          child: Icon(IconHelper.getIconForSpecialty(name),
-                              size: 26,
-                              color: isSelected ? Colors.blue : Colors.black87),
+                          child: Icon(
+                            IconHelper.getIconForSpecialty(name),
+                            size: 26,
+                            color: isSelected ? Colors.blue : Colors.black87,
+                          ),
                         ),
                         const SizedBox(height: 5),
                         Text(
@@ -194,7 +265,9 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
             ),
             const SizedBox(height: 10),
 
-            // ---------------- DOCTOR LIST ----------------
+            // ---------------------------------------------------------
+            // 🔥 DOCTOR LIST
+            // ---------------------------------------------------------
             StreamBuilder(
               stream: _dbRef.child("healthcare/users/providers").onValue,
               builder: (_, snapshot) {
@@ -217,11 +290,10 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
                   final matchesFilter =
                       _selectedFilter == "All" || specialty == _selectedFilter;
 
-                  final matchesSearch =
-                      doc["firstName"]
-                          .toString()
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase());
+                  final matchesSearch = doc["firstName"]
+                      .toString()
+                      .toLowerCase()
+                      .contains(_searchQuery.toLowerCase());
 
                   return matchesFilter && matchesSearch;
                 }).toList();
@@ -230,10 +302,24 @@ class _DoctorDiscoveryPageState extends State<DoctorDiscoveryPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: doctors.length,
-                  itemBuilder: (_, i) => DoctorCard(
-                    doctor: doctors[i],
-     
-                  ),
+                  itemBuilder: (_, i) {
+                    final doctor = doctors[i];
+
+                    final formatted = {
+                      "userKey": doctor["userKey"],
+                      "name": "${doctor["firstName"]} ${doctor["lastName"]}",
+                      "degree": doctor["degree"] ?? "",
+                      "specialty": doctor["specialties"]?[0] ?? "General",
+                      "experience": doctor["experience"] ?? "0 yrs",
+                      "languages": doctor["languages"] ?? [],
+                      "rating": doctor["rating"] ?? 4.5,
+                      "price": doctor["price"] ?? 299,
+                      "image": doctor["image"] ??
+                          "https://cdn-icons-png.flaticon.com/512/147/147144.png",
+                    };
+
+                    return DoctorCard(doctor: formatted);
+                  },
                 );
               },
             )
