@@ -56,7 +56,7 @@ class _SignInFormState extends State<SignInForm> {
       Map? finalUserData;
 
       // LOOP THROUGH ROLES → patients/providers/corporate/admin
-      for (String role in ["patients", "providers", "corporate", "admin"]) {
+      for (String role in ["patients", "providers", "corporates", "admin"]) {
         if (data[role] != null) {
           Map usersOfRole = data[role];
 
