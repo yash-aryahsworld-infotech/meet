@@ -1,118 +1,161 @@
 import 'package:flutter/material.dart';
 
 class TimeSlotGrid extends StatelessWidget {
-  final bool isLoading;
-  final bool isDayActive;
-  final String dayName;
-  final List<String> morningSlots;
-  final List<String> afternoonSlots;
-  final List<String> bookedSlots;
-  final int selectedTimeIndex;
-  final Function(int) onSlotSelected;
+  final List<Map<String, dynamic>> slots; // Changed from List<String> to List<Map>
+  final Set<String> bookedSlots;
+  final String? selectedTime;
+  final ValueChanged<String> onTimeSelected;
 
   const TimeSlotGrid({
     super.key,
-    required this.isLoading,
-    required this.isDayActive,
-    required this.dayName,
-    required this.morningSlots,
-    required this.afternoonSlots,
+    required this.slots,
     required this.bookedSlots,
-    required this.selectedTimeIndex,
-    required this.onSlotSelected,
+    required this.selectedTime,
+    required this.onTimeSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) return const Center(child: CircularProgressIndicator());
-    if (!isDayActive) return Center(child: Text("Doctor not available on $dayName", style: const TextStyle(color: Colors.grey)));
+    if (slots.isEmpty) {
+      return Center(
+        child: Text("No slots available", style: TextStyle(color: Colors.grey.shade500)),
+      );
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Legend
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _buildLegendDot(Colors.white, Colors.black, "Available"),
-            const SizedBox(width: 10),
-            _buildLegendDot(Colors.green.shade50, Colors.green, "Selected"),
-            const SizedBox(width: 10),
-            _buildLegendDot(Colors.grey.shade200, Colors.grey, "Booked"),
-          ],
-        ),
-        const SizedBox(height: 10),
+    // Helper to filter slots
+    List<Map<String, dynamic>> getSlotsByPeriod(int startHour, int endHour) {
+      return slots.where((slot) {
+        final timeStr = slot['time'] as String;
+        final parts = timeStr.split(' ');
+        final hm = parts[0].split(':');
+        int h = int.parse(hm[0]);
+        if (parts[1] == 'PM' && h != 12) h += 12;
+        if (parts[1] == 'AM' && h == 12) h = 0;
+        return h >= startHour && h < endHour;
+      }).toList();
+    }
 
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (morningSlots.isNotEmpty) ...[
-                  const Text("Morning", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10, runSpacing: 10,
-                    children: List.generate(morningSlots.length, (index) => _buildChip(index, morningSlots[index])),
-                  ),
-                ],
+    final morning = getSlotsByPeriod(0, 12);
+    final afternoon = getSlotsByPeriod(12, 17);
+    final evening = getSlotsByPeriod(17, 24);
 
-                if (afternoonSlots.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  const Text("Afternoon / Evening", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10, runSpacing: 10,
-                    children: List.generate(afternoonSlots.length, (index) {
-                      // Offset index by morning length
-                      final actualIndex = index + morningSlots.length;
-                      return _buildChip(actualIndex, afternoonSlots[index]);
-                    }),
-                  ),
-                ],
-
-                if (morningSlots.isEmpty && afternoonSlots.isEmpty)
-                   const Center(child: Padding(padding: EdgeInsets.all(30), child: Text("No slots available."))),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChip(int index, String time) {
-    final bool isBooked = bookedSlots.contains(time);
-    final bool isSelected = selectedTimeIndex == index;
-
-    return InkWell(
-      onTap: isBooked ? null : () => onSlotSelected(index),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isBooked ? Colors.grey.shade200 : (isSelected ? Colors.green.shade50 : Colors.white),
-          border: Border.all(color: isBooked ? Colors.grey.shade300 : (isSelected ? Colors.green : Colors.grey.shade300)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          time,
-          style: TextStyle(
-            color: isBooked ? Colors.grey : (isSelected ? Colors.green : Colors.black87),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            decoration: isBooked ? TextDecoration.lineThrough : null,
-          ),
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLegend(),
+          if (morning.isNotEmpty) _buildSection("Morning", Icons.wb_sunny_outlined, morning),
+          if (afternoon.isNotEmpty) _buildSection("Afternoon", Icons.wb_sunny, afternoon),
+          if (evening.isNotEmpty) _buildSection("Evening", Icons.nightlight_round, evening),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  Widget _buildLegendDot(Color bg, Color border, String label) {
+  Widget _buildSection(String title, IconData icon, List<Map<String, dynamic>> timeSlots) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+            ],
+          ),
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: timeSlots.map((slotData) {
+            final time = slotData['time'] as String;
+            final duration = slotData['duration']; // Get Duration
+            
+            final isBooked = bookedSlots.contains(time);
+            final isSelected = selectedTime == time;
+            
+            return InkWell(
+              onTap: isBooked ? null : () => onTimeSelected(time),
+              child: Container(
+                width: 90, // Fixed width for consistent look
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isBooked 
+                      ? Colors.grey.shade200 
+                      : (isSelected ? Colors.green : Colors.white),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isBooked 
+                        ? Colors.transparent 
+                        : (isSelected ? Colors.green : Colors.grey.shade300),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // TIME TEXT
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isBooked 
+                            ? Colors.grey.shade400 
+                            : (isSelected ? Colors.white : Colors.black87),
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        decoration: isBooked ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // DURATION TEXT
+                    Text(
+                      "$duration min",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isBooked 
+                            ? Colors.grey.shade400 
+                            : (isSelected ? Colors.white70 : Colors.grey.shade500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _legendItem(Colors.white, Colors.grey.shade300, "Available"),
+        const SizedBox(width: 15),
+        _legendItem(Colors.green, Colors.transparent, "Selected", textColor: Colors.white),
+        const SizedBox(width: 15),
+        _legendItem(Colors.grey.shade200, Colors.transparent, "Booked", textColor: Colors.grey),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color bg, Color border, String label, {Color textColor = Colors.black}) {
     return Row(
       children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: bg, border: Border.all(color: border), borderRadius: BorderRadius.circular(3))),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        Container(
+          width: 16, height: 16,
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }

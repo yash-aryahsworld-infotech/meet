@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:healthcare_plus/Screens/Patient/appointment/appointment_card.dart';
-import 'package:healthcare_plus/widgets/custom_header.dart';
-import 'package:healthcare_plus/widgets/custom_tab.dart';
+import 'package:healthcare_plus/Screens/Patient/appointment/appointment_card.dart'; // Ensure this points to your file
+import 'package:healthcare_plus/widgets/custom_header.dart'; // Ensure this points to your file
+import 'package:healthcare_plus/widgets/custom_tab.dart'; // Ensure this points to your file
 
 class Appointments extends StatefulWidget {
   const Appointments({super.key});
@@ -76,84 +76,117 @@ class _AppointmentsState extends State<Appointments> {
   Future<void> _processAppointments(DataSnapshot snapshot) async {
     try {
       final appointmentsData = snapshot.value as Map<dynamic, dynamic>;
+      final tempAppointments = <Map<String, dynamic>>[];
+      
+      // 1. Collect appointments for this patient
+      for (var entry in appointmentsData.entries) {
+        final appointmentData = entry.value as Map<dynamic, dynamic>;
+        final patientId = appointmentData['patientId']?.toString() ?? "";
+        
+        if (patientId == _patientId) {
+          tempAppointments.add({
+            ...Map<String, dynamic>.from(appointmentData),
+            'appointmentId': entry.key.toString(),
+          });
+        }
+      }
+
+      // 2. Extract Unique Doctor IDs (FIXED LINE)
+      final uniqueDoctorIds = tempAppointments
+          .map((a) => a['doctorId']?.toString())
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>() // <--- THIS FIXES THE ERROR
+          .toSet();
+
+      // 3. Fetch Doctor Data (Name, Image, Specialty)
+      final Map<String, Map<String, String>> doctorsCache = {};
+      
+      for (String docId in uniqueDoctorIds) {
+        final docSnapshot = await FirebaseDatabase.instance
+            .ref("healthcare/users/providers/$docId")
+            .get();
+
+        if (docSnapshot.exists) {
+          final docData = docSnapshot.value as Map<dynamic, dynamic>;
+          final firstName = docData['firstName']?.toString() ?? "";
+          final lastName = docData['lastName']?.toString() ?? "";
+          
+          doctorsCache[docId] = {
+            "name": "Dr. $firstName $lastName".trim(),
+            "image": docData['image']?.toString() ?? "",
+            "specialty": docData['specialty']?.toString() ?? "Specialist",
+          };
+        }
+      }
+
+      // 4. Process and categorize appointments
       final upcoming = <Map<String, dynamic>>[];
       final past = <Map<String, dynamic>>[];
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
-      for (var entry in appointmentsData.entries) {
-        final appointmentData = entry.value as Map<dynamic, dynamic>;
-        final patientId = appointmentData['patientId']?.toString() ?? "";
+      for (var appt in tempAppointments) {
+        final doctorId = appt['doctorId']?.toString() ?? "";
         
-        if (patientId != _patientId) continue;
-        
-        // Get status
-        final status = appointmentData['status']?.toString() ?? "";
+        // Fill in Doctor Details from Cache
+        if (doctorsCache.containsKey(doctorId)) {
+          appt['doctorName'] = doctorsCache[doctorId]!['name'];
+          appt['specialty'] = doctorsCache[doctorId]!['specialty'];
+          appt['image'] = doctorsCache[doctorId]!['image'];
+        } else {
+          appt['doctorName'] = "Unknown Doctor";
+        }
 
-        // Get doctor details
-        final doctorId = appointmentData['doctorId']?.toString() ?? "";
-        String doctorName = appointmentData['doctorName']?.toString() ?? "Unknown Doctor";
-        String specialty = appointmentData['specialty']?.toString() ?? "Specialist";
-        
-        // Parse appointment date
-        final dateStr = appointmentData['date']?.toString() ?? "";
+        // Format Date & Status Logic
+        final dateStr = appt['date']?.toString() ?? "";
         DateTime? appointmentDate;
         
         if (dateStr.isNotEmpty) {
-          try {
-            appointmentDate = DateTime.parse(dateStr);
-          } catch (e) {
-            // Try timestamp if date parsing fails
-            if (appointmentData['timestamp'] != null) {
-              final timestamp = appointmentData['timestamp'];
-              appointmentDate = DateTime.fromMillisecondsSinceEpoch(
-                timestamp is int ? timestamp : int.parse(timestamp.toString())
-              );
-            }
-          }
+           try {
+             appointmentDate = DateTime.parse(dateStr);
+           } catch (e) {
+             // Fallback for timestamp if needed
+           }
         }
 
         if (appointmentDate == null) continue;
 
-        final appointmentDay = DateTime(
-          appointmentDate.year,
-          appointmentDate.month,
-          appointmentDate.day,
-        );
-
+        // Strip time for date comparison
+        final appointmentDay = DateTime(appointmentDate.year, appointmentDate.month, appointmentDate.day);
+        
+        final status = appt['status']?.toString() ?? "";
         final isCancelled = status == 'cancelled';
         final isUpcoming = !isCancelled && (appointmentDay.isAtSameMomentAs(today) || appointmentDay.isAfter(today));
 
-        final appointment = {
-          "appointmentId": appointmentData['appointmentId']?.toString() ?? entry.key,
-          "name": doctorName,
-          "specialty": specialty,
-          "image": "",
-          "type": appointmentData['type']?.toString().capitalize() ?? "Clinic",
+        // Format the object for UI
+        final finalAppointment = {
+          "appointmentId": appt['appointmentId'],
+          "name": appt['doctorName'],
+          "specialty": appt['specialty'],
+          "image": appt['image'],
+          "type": appt['type']?.toString().capitalize() ?? "Clinic",
           "date": _formatDate(appointmentDate),
-          "time": appointmentData['time']?.toString() ?? "",
+          "time": appt['time']?.toString() ?? "",
+          "duration": appt['duration'] ?? 30,
           "isUpcoming": isUpcoming,
           "patientId": _patientId,
-          "patientName": appointmentData['patientName']?.toString() ?? "",
           "doctorId": doctorId,
           "status": status,
-          "cancellationReason": appointmentData['cancellationReason']?.toString() ?? "",
-          "cancelledBy": appointmentData['cancelledBy']?.toString() ?? "",
-          "cancelledAt": appointmentData['cancelledAt']?.toString() ?? "",
+          "cancellationReason": appt['cancellationReason'],
+          "cancelledBy": appt['cancelledBy'],
         };
 
-        // Cancelled appointments always go to past
         if (isCancelled) {
-          past.add(appointment);
+          past.add(finalAppointment);
         } else if (isUpcoming) {
-          upcoming.add(appointment);
+          upcoming.add(finalAppointment);
         } else {
-          past.add(appointment);
+          past.add(finalAppointment);
         }
       }
 
-      // Sort by date
-      upcoming.sort((a, b) => _compareDates(a["date"], b["date"]));
+      // Sort
+      upcoming.sort((a, b) => _compareDates(a["date"], b["date"])); 
       past.sort((a, b) => _compareDates(b["date"], a["date"]));
 
       if (mounted) {
@@ -167,6 +200,7 @@ class _AppointmentsState extends State<Appointments> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+      debugPrint("Error processing appointments: $e");
     }
   }
 
@@ -189,7 +223,6 @@ class _AppointmentsState extends State<Appointments> {
   }
 
   int _compareDates(String date1, String date2) {
-    // Simple comparison, can be enhanced
     return date1.compareTo(date2);
   }
 
@@ -254,13 +287,11 @@ class _AppointmentsState extends State<Appointments> {
   Widget _buildTabContent() {
     switch (_selectedTab) {
       case 0:
-        // ⭐ Use the new Widget
         return AppointmentList(
           appointments: _upcomingAppointments,
           emptyMsg: "No upcoming appointments.",
         );
       case 1:
-        // ⭐ Reuse the new Widget
         return AppointmentList(
           appointments: _pastAppointments,
           emptyMsg: "No past appointments.",
@@ -281,12 +312,10 @@ class _AppointmentsState extends State<Appointments> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: const Center(child: Text("Calendar Widget Placeholder")),
+      child: const Center(child: Text("Calendar View Coming Soon")),
     );
   }
 }
-
-
 
 extension StringExtension on String {
   String capitalize() {

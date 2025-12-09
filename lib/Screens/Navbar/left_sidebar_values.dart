@@ -17,6 +17,7 @@ import 'package:healthcare_plus/Screens/Patient/analytics.dart';
 import 'package:healthcare_plus/Screens/Patient/appointments.dart';
 import 'package:healthcare_plus/Screens/Patient/health_record.dart';
 import 'package:healthcare_plus/Screens/Patient/help_and_support.dart';
+import 'package:healthcare_plus/Screens/Patient/hp.dart';
 import 'package:healthcare_plus/Screens/Patient/insurance.dart';
 import 'package:healthcare_plus/Screens/Patient/near_by_healthcare.dart';
 import 'package:healthcare_plus/Screens/Patient/payments.dart';
@@ -73,6 +74,12 @@ final List<SidebarItem> patientSidebar = [
     title: 'Profile',
     route: '/profile',
     page: PatientProfileManager(),
+  ),
+    SidebarItem(
+    icon: Icons.person_2_rounded,
+    title: 'NearByHealthProvider',
+    route: '/nearbyhealthprovider',
+    page:DoctorListComponent(),
   ),
   SidebarItem(
     icon: Icons.video_call,
