@@ -1,8 +1,10 @@
 import 'dart:math' show cos, sqrt, asin;
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+
+// Import your card component
+import './near_by_health_provider/near_by_doctor_card.dart';
 
 class DoctorListComponent extends StatefulWidget {
   const DoctorListComponent({super.key});
@@ -11,7 +13,7 @@ class DoctorListComponent extends StatefulWidget {
   State<DoctorListComponent> createState() => _DoctorListComponentState();
 }
 
-class _DoctorListComponentState extends State<DoctorListComponent> {
+class _DoctorListComponentState extends State<DoctorListComponent> with WidgetsBindingObserver {
   List<Map<String, dynamic>> allDoctors = [];
   List<Map<String, dynamic>> filteredDoctors = [];
 
@@ -19,53 +21,115 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
   String searchQuery = "";
   
   // 🟢 State Variables
-  bool loading = true; // For initial Firebase fetch
+  bool loading = true;
+  
+  // distinct error states to show different buttons
+  bool isServiceDisabled = false; 
+  bool isPermissionDenied = false; 
+  String? errorMessage; 
 
   // 📍 Location State variables
   double? userLat;
   double? userLng;
   double filterDistanceKm = 7.0; 
 
-  final double defaultLat = 19.0760;
-  final double defaultLng = 72.8777;
-
   @override
   void initState() {
     super.initState();
-    _getUserLocation();
+    WidgetsBinding.instance.addObserver(this); 
+    _getUserLocation(); 
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // 🟢 Detect when user comes back from Settings (App settings or GPS toggle)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // If we were previously in an error state, try again automatically
+      if (isServiceDisabled || isPermissionDenied || errorMessage != null) {
+        _getUserLocation();
+      }
+    }
   }
 
   Future<void> _getUserLocation() async {
+    if (!mounted) return;
+
+    setState(() {
+      loading = true;
+      isServiceDisabled = false;
+      isPermissionDenied = false;
+      errorMessage = null;
+    });
+
     try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+      // 1. Check if GPS/Location Service is ENABLED
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        setState(() {
+          isServiceDisabled = true;
+          errorMessage = "Location services are disabled. Please turn on GPS.";
+          loading = false;
+        });
+        return;
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
-        Position position = await Geolocator.getCurrentPosition();
-        if (mounted) {
+      // 2. Check Permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      
+      if (permission == LocationPermission.denied) {
+        // Request permission
+        permission = await Geolocator.requestPermission();
+        
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
           setState(() {
-            userLat = position.latitude;
-            userLng = position.longitude;
+            isPermissionDenied = true;
+            errorMessage = "Location permission is denied.";
+            loading = false;
           });
+          return;
         }
-      } else {
-        setState(() {
-          userLat = defaultLat;
-          userLng = defaultLng;
-        });
       }
-    } catch (e) {
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          isPermissionDenied = true;
+          errorMessage = "Location permission is permanently denied. Please enable it in App Settings.";
+          loading = false;
+        });
+        return;
+      }
+
+      // 3. Permission Granted & Service On -> Get Position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high
+      );
+      
       if (mounted) {
         setState(() {
-          userLat = defaultLat;
-          userLng = defaultLng;
+          userLat = position.latitude;
+          userLng = position.longitude;
+        });
+        fetchDoctors();
+      }
+
+    } catch (e) {
+      debugPrint("Location error: $e");
+      if (mounted) {
+        setState(() {
+          errorMessage = "Error determining location: $e";
+          loading = false;
         });
       }
     }
-    fetchDoctors();
   }
 
   double _calculateDistance(
@@ -97,8 +161,8 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
           }
 
           double distance = _calculateDistance(
-            userLat ?? defaultLat,
-            userLng ?? defaultLng,
+            userLat ?? 0,
+            userLng ?? 0,
             docLat,
             docLng,
           );
@@ -124,7 +188,6 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
         if (mounted) {
           setState(() {
             allDoctors = doctors;
-            // Initially show doctors within default distance
             filteredDoctors = allDoctors.where((doc) => (doc["distance"] as double) <= filterDistanceKm).toList();
             loading = false;
           });
@@ -137,19 +200,14 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
     }
   }
 
-  // 🟢 2. Search Function (No Artificial Delay)
   void applyFilter() {
-    // 1. Set Loading to TRUE
     setState(() {
       loading = true;
     });
 
-    // We use a microtask or zero-duration future to ensure the UI 
-    // has a chance to repaint the "loading" spinner before the calculation runs.
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
 
-      // 2. Perform the logic
       final results = allDoctors.where((doc) {
         bool matchCategory =
             selectedCategory == "All" || doc["category"] == selectedCategory;
@@ -162,7 +220,6 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
         return matchCategory && matchSearch && matchDistance;
       }).toList();
 
-      // 3. Set Loading to FALSE
       setState(() {
         filteredDoctors = results;
         loading = false;
@@ -172,6 +229,80 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
 
   @override
   Widget build(BuildContext context) {
+    
+    // 🔴 1. Error View 
+    if (errorMessage != null || isServiceDisabled || isPermissionDenied) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.location_off, size: 64, color: Colors.redAccent),
+              const SizedBox(height: 24),
+              Text(
+                isServiceDisabled ? "GPS is Disabled" : "Permission Required",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                errorMessage ?? "To find nearby doctors, please allow location access.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+              const SizedBox(height: 32),
+              
+              // 🟢 Dynamic Button based on Error Type
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                     if (isServiceDisabled) {
+                       // Opens GPS Toggle Settings
+                       await Geolocator.openLocationSettings();
+                     } else {
+                       // Opens App Permission Settings
+                       await Geolocator.openAppSettings();
+                     }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                  ),
+                  child: Text(isServiceDisabled ? "Turn on GPS" : "Open App Settings"),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Retry Button
+              TextButton.icon(
+                onPressed: _getUserLocation,
+                icon: const Icon(Icons.refresh),
+                label: const Text("Try Again"),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 🔴 2. Loading View
+    if (loading && allDoctors.isEmpty) {
+       return const Center(
+         child: Column(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             CircularProgressIndicator(),
+             SizedBox(height: 16),
+             Text("Finding doctors nearby...")
+           ],
+         )
+       );
+    }
+
     List<String> categories = [
       "All",
       ...{for (var doc in allDoctors) doc["category"] as String},
@@ -180,9 +311,7 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        /// ------------------------------------------
-        /// 1. 🔍 SEARCH & FILTER HEADER
-        /// ------------------------------------------
+        // ... (Header Search & Slider Code remains exactly the same as previous) ...
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.white,
@@ -226,8 +355,6 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
-                  // 🟢 Search Button with Spinner
                   SizedBox(
                     height: 50,
                     width: 50,
@@ -302,7 +429,7 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Nearby Distance: ${filterDistanceKm.toStringAsFixed(1)} km",
+                              "Nearby: ${filterDistanceKm.toStringAsFixed(1)} km",
                               style: const TextStyle(
                                   fontSize: 12, color: Colors.black87),
                             ),
@@ -328,7 +455,6 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
                                 setState(() {
                                   filterDistanceKm = val;
                                 });
-                                // Only visual update, search button applies logic
                               },
                             ),
                           ),
@@ -356,9 +482,7 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
           ),
         ),
 
-        /// ------------------------------------------
-        /// 2. 📋 SCROLLABLE LIST
-        /// ------------------------------------------
+        // List
         if (loading)
           const Padding(
             padding: EdgeInsets.all(32.0),
@@ -384,176 +508,6 @@ class _DoctorListComponentState extends State<DoctorListComponent> {
             },
           ),
       ],
-    );
-  }
-}
-
-class DoctorCard extends StatelessWidget {
-  final Map<String, dynamic> doc;
-
-  const DoctorCard({super.key, required this.doc});
-
-  Future<void> _launchURL(String urlString) async {
-    if (urlString.isEmpty) return;
-    final Uri url = Uri.parse(urlString);
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      debugPrint("Error launching URL: $e");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, color: Colors.blueAccent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        doc["title"],
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${doc["category"]} • Walk-in clinic",
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.star, size: 12, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            "${doc["rating"]}",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${(doc["distance"] as double).toStringAsFixed(1)} km away",
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.blueAccent),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    doc["address"],
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-             const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.phone_outlined,
-                    size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text(
-                  doc["phone"].toString(),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.call, size: 16),
-                    label: const Text("Call"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      foregroundColor: Colors.black87,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchURL(doc["url"]),
-                    icon: const Icon(Icons.location_on, size: 16),
-                    label: const Text("View Map"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
     );
   }
 }
