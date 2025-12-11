@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 // You must download this file from Firebase Console -> Project Settings -> Service Accounts
-const serviceAccount = require("../serviceAccountKey.json");
+const serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
