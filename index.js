@@ -11,6 +11,11 @@ const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send("Server is working!");
+});
+
 app.use("/api/meeting", meetingRoutes);
 
 const io = new Server(server, {
