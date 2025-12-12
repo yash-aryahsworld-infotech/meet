@@ -93,10 +93,10 @@ class _OnlineConsultantPageState extends State<OnlineConsultantPage> {
           'image': doctor['profileImage']?.toString() ?? '',
           'price': int.tryParse(doctor['consultationFee']?.toString() ?? '0') ?? 0,
           'rating': 4.5, // Default rating
-          'durations': ['10 min', '30 min', '45 min'],
           'phone': doctor['phone']?.toString() ?? '',
           'email': doctor['email']?.toString() ?? '',
           'languages': languagesList,
+          'type': 'Online', // Consultation type for online consultant
         });
       });
 

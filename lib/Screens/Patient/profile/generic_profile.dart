@@ -122,7 +122,7 @@ class _GenericProfileFormState extends State<GenericProfileForm> {
               // Gender Dropdown
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedGender,
+                  initialValue: _selectedGender,
                   decoration: const InputDecoration(
                     labelText: "Gender",
                     border: OutlineInputBorder(),

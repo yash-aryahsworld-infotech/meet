@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
 import 'package:healthcare_plus/Screens/Patient/appointment/reschedule_appoinment.dart';
+import 'package:healthcare_plus/video_call/video_call_helper.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:healthcare_plus/video_call/config/app_config.dart';
 
 // Wrapper Widget
 class AppointmentList extends StatelessWidget {
@@ -171,7 +174,7 @@ class AppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isUpcoming = appointment['isUpcoming'] ?? false;
-    final String type = appointment['type'] ?? "Clinic"; // Default to Clinic if null
+    final String type = appointment['type'] ?? ""; // No default - show what's in database
     final bool isOnline = type == "Online";
     final String? imagePath = appointment['image'];
     final String? cancellationReason = appointment['cancellationReason'];
@@ -268,7 +271,7 @@ class AppointmentCard extends StatelessWidget {
                                 ],
                               ),
                             )
-                          else
+                          else if (type.isNotEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
@@ -282,6 +285,24 @@ class AppointmentCard extends StatelessWidget {
                                   Text(
                                     typeText,
                                     style: TextStyle(color: typeColor, fontWeight: FontWeight.w600, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.help_outline, size: 14, color: Colors.grey.shade500),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Type Unknown",
+                                    style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 12),
                                   ),
                                 ],
                               ),
@@ -370,29 +391,11 @@ class AppointmentCard extends StatelessWidget {
               // ---------------- UPCOMING LAYOUT ----------------
               Column(
                 children: [
-                  // Video Call Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Starting video call...")),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      icon: const Icon(Icons.videocam, size: 16),
-                      label: const Text(
-                        "Video Call",
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
+                  // Video Call Button (Only for Online consultations)
+                  if (type == 'Online')
+                    _buildVideoCallButton(context, appointment)
+                  else
+                    const SizedBox.shrink(),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -435,40 +438,6 @@ class AppointmentCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: const Text("Reschedule", style: TextStyle(fontSize: 12)),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // 3. Chat Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatScreen(
-                                  appointmentId: appointment['appointmentId'] ?? '',
-                                  patientId: appointment['patientId'] ?? '',
-                                  patientName: appointment['patientName'] ?? '',
-                                  doctorId: appointment['doctorId'] ?? '',
-                                  doctorName: appointment['name'] ?? '',
-                                  isDoctor: false,
-                                ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                          label: const Text(
-                            "Chat",
-                            style: TextStyle(fontSize: 12),
-                          ),
                         ),
                       ),
                     ],
@@ -530,5 +499,183 @@ class AppointmentCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildVideoCallButton(BuildContext context, Map<String, dynamic> appointment) {
+    final appointmentId = appointment['appointmentId'];
+    final appointmentDate = appointment['date'];
+    final appointmentTime = appointment['time'];
+    final duration = appointment['duration'] ?? 30;
+    
+    // Create socket connection to listen for doctor starting call
+    final socket = io.io(AppConfig.serverUrl, <String, dynamic>{
+      'transports': ['websocket', 'polling'],
+      'autoConnect': true,
+    });
+    
+    // Parse appointment date and time
+    DateTime? appointmentDateTime;
+    try {
+      if (appointmentDate != null && appointmentTime != null) {
+        final dateStr = appointmentDate.toString();
+        final timeStr = appointmentTime.toString();
+        
+        // Parse date
+        DateTime parsedDate;
+        if (dateStr.contains('-')) {
+          parsedDate = DateTime.parse(dateStr);
+        } else {
+          parsedDate = DateTime.now();
+        }
+        
+        // Parse time (format: "HH:MM AM/PM")
+        final timeParts = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().split(' ');
+        if (timeParts.isNotEmpty) {
+          final hourMinute = timeParts[0].split(':');
+          int hour = int.parse(hourMinute[0]);
+          final minute = int.parse(hourMinute[1]);
+          
+          if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'PM' && hour != 12) {
+            hour += 12;
+          } else if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'AM' && hour == 12) {
+            hour = 0;
+          }
+          
+          appointmentDateTime = DateTime(
+            parsedDate.year,
+            parsedDate.month,
+            parsedDate.day,
+            hour,
+            minute,
+          );
+        }
+      }
+    } catch (e) {
+      // Error parsing date/time
+    }
+    
+    // Listen for doctor starting the call
+    return StreamBuilder<bool>(
+      stream: _listenForCallStart(socket, appointmentId),
+      builder: (context, snapshot) {
+        final doctorStartedCall = snapshot.data ?? false;
+        final now = DateTime.now();
+        final canJoinByTime = appointmentDateTime != null && 
+                        now.isAfter(appointmentDateTime.subtract(const Duration(minutes: 5)));
+        final isExpired = appointmentDateTime != null && 
+                          now.isAfter(appointmentDateTime.add(Duration(minutes: duration)));
+        
+        String buttonText = "Join Video Call";
+        Color buttonColor = Colors.purple;
+        bool isEnabled = (doctorStartedCall || canJoinByTime) && !isExpired;
+        
+        if (isExpired) {
+          buttonText = "Call Ended";
+          buttonColor = Colors.grey;
+          isEnabled = false;
+        } else if (doctorStartedCall && !canJoinByTime) {
+          buttonText = "Doctor is waiting! Join now";
+          buttonColor = Colors.green;
+          isEnabled = true;
+        } else if (!canJoinByTime && appointmentDateTime != null) {
+          final minutesUntil = appointmentDateTime.difference(now).inMinutes;
+          buttonText = "Available in $minutesUntil min";
+          buttonColor = Colors.orange;
+          isEnabled = false;
+        }
+        
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: isEnabled ? () async {
+              if (appointmentId == null || appointmentId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Appointment ID not found"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              
+              socket.dispose(); // Clean up socket
+              
+              // Calculate end time based on WHEN PATIENT JOINS THE CALL
+              // If slot is 50 minutes, timer shows exactly 50 minutes from NOW
+              final now = DateTime.now();
+              final scheduledEndTime = now.add(Duration(minutes: duration));
+              
+              debugPrint('🔍 PATIENT JOINING CALL:');
+              debugPrint('   Duration: $duration minutes');
+              debugPrint('   Join time (NOW): $now');
+              debugPrint('   End time (NOW + duration): $scheduledEndTime');
+              debugPrint('   Timer will show: $duration minutes');
+              
+              await VideoCallHelper.startCallAsPatient(
+                context: context,
+                appointmentId: appointmentId,
+                doctorName: appointment['name'] ?? 'Doctor',
+                duration: duration,
+                scheduledEndTime: scheduledEndTime,
+              );
+            } : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.grey.shade600,
+            ),
+            icon: Icon(
+              isExpired ? Icons.videocam_off : (doctorStartedCall ? Icons.notifications_active : Icons.videocam),
+              size: 16,
+            ),
+            label: Text(
+              buttonText,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Stream<bool> _listenForCallStart(io.Socket socket, String? appointmentId) {
+    if (appointmentId == null) return Stream.value(false);
+    
+    final controller = StreamController<bool>();
+    bool callActive = false;
+    
+    // Listen for call-started event
+    socket.on('call-started', (data) {
+      if (data['appointmentId'] == appointmentId) {
+        callActive = true;
+        controller.add(true);
+      }
+    });
+    
+    // Listen for call-ended event
+    socket.on('call-ended', (data) {
+      if (data['appointmentId'] == appointmentId) {
+        callActive = false;
+        controller.add(false);
+      }
+    });
+    
+    // Check current status on connect
+    socket.on('connect', (_) {
+      socket.emit('check-call-status', {'appointmentId': appointmentId});
+    });
+    
+    socket.on('call-status-response', (data) {
+      if (data['appointmentId'] == appointmentId) {
+        callActive = data['isActive'] ?? false;
+        controller.add(callActive);
+      }
+    });
+    
+    return controller.stream;
   }
 }

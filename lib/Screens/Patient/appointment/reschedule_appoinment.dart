@@ -22,8 +22,8 @@ class _RescheduleBottomSheetState extends State<RescheduleBottomSheet> {
   int _selectedDuration = 30;
 
   List<String> _bookedSlotsForDate = [];
-  List<Map<String, dynamic>> _morningSlots = [];
-  List<Map<String, dynamic>> _afternoonSlots = [];
+  final List<Map<String, dynamic>> _morningSlots = [];
+  final List<Map<String, dynamic>> _afternoonSlots = [];
   
   bool _isDayActive = true;
 

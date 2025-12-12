@@ -31,7 +31,7 @@ class _AddFamilySheetState extends State<AddFamilySheet> {
             const Text("Add Family Member", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              value: _relation,
+              initialValue: _relation,
               decoration: const InputDecoration(labelText: "Relation", border: OutlineInputBorder()),
               items: ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
               onChanged: (v) => setState(() => _relation = v!),
@@ -43,7 +43,7 @@ class _AddFamilySheetState extends State<AddFamilySheet> {
               Expanded(child: TextFormField(controller: _age, decoration: const InputDecoration(labelText: "Age", border: OutlineInputBorder()))),
               const SizedBox(width: 10),
               Expanded(child: DropdownButtonFormField<String>(
-                value: _gender,
+                initialValue: _gender,
                 decoration: const InputDecoration(labelText: "Gender", border: OutlineInputBorder()),
                 items: ["Male", "Female","Other"].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                 onChanged: (v) => setState(() => _gender = v!),

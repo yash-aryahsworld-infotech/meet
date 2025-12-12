@@ -21,7 +21,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   
   // Profile Data
   String? _selectedProfileKey;
-  String? _selectedProfileName;
   List<Map<String, dynamic>> _profiles = [];
   bool _loadingProfiles = true;
 
@@ -84,7 +83,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
         _profiles = profiles;
         if (profiles.isNotEmpty) {
           _selectedProfileKey = profiles[0]['key'];
-          _selectedProfileName = profiles[0]['name'];
         }
         _loadingProfiles = false;
       });
@@ -201,17 +199,72 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       final prefs = await SharedPreferences.getInstance();
       final patientId = prefs.getString("userKey");
       
+      if (patientId == null || patientId.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Please login first"), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+      
+      // Fetch patient data to get booking information
+      final patientSnapshot = await FirebaseDatabase.instance
+          .ref('healthcare/users/patients/$patientId')
+          .get();
+      
+      String bookedByName = "Unknown";
+      String? bookingForName;
+      String? bookingForRelation;
+      String patientName = "Unknown Patient";
+      
+      if (patientSnapshot.exists) {
+        final patientData = Map<String, dynamic>.from(patientSnapshot.value as Map);
+        final firstName = patientData['firstName']?.toString() ?? '';
+        final lastName = patientData['lastName']?.toString() ?? '';
+        bookedByName = '$firstName $lastName'.trim();
+        
+        // Check if booking for self or family member
+        if (_selectedProfileKey == patientId) {
+          // Booking for self
+          patientName = bookedByName;
+        } else {
+          // Booking for family member
+          if (patientData['family'] != null) {
+            final familyMap = Map<String, dynamic>.from(patientData['family'] as Map);
+            if (familyMap.containsKey(_selectedProfileKey)) {
+              final memberData = Map<String, dynamic>.from(familyMap[_selectedProfileKey] as Map);
+              bookingForName = memberData['name']?.toString() ?? '';
+              bookingForRelation = memberData['relation']?.toString() ?? '';
+              patientName = bookingForName.isNotEmpty ? bookingForName : 'Family Member';
+            }
+          }
+        }
+      }
+      
       final appointmentRef = FirebaseDatabase.instance.ref('healthcare/all_appointments').push();
+      
+      // Get consultation type from doctor data
+      final consultationType = widget.doctor['type']?.toString() ?? 'Clinic';
       
       final appointmentData = {
         'appointmentId': appointmentRef.key,
         'patientId': patientId,
+        'patientName': patientName,
+        'bookedBy': bookedByName,
+        'bookingForName': bookingForName,
+        'bookingForRelation': bookingForRelation,
         'doctorId': doctorId,
-        'date': dateKey,
+        'doctorName': widget.doctor['name']?.toString() ?? 'Unknown Doctor',
+        'specialty': widget.doctor['specialty']?.toString() ?? 'Specialist',
+        'date': DateTime.parse(dateKey).toIso8601String(),
         'time': _selectedTime,
         'duration': slotDuration, 
-        'status': 'Online',
+        'status': 'scheduled',
+        'type': consultationType, // Store consultation type (Online/Clinic)
         'selectedProfileKey': _selectedProfileKey,
+        'reason': 'General Consultation',
+        'createdAt': DateTime.now().toIso8601String(),
         'timestamp': ServerValue.timestamp,
       };
 
@@ -229,9 +282,11 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
         );
       }
     } catch (e) {
-       ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
+      }
     }
   }
 
@@ -297,7 +352,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 onChanged: (key) {
                   setState(() {
                     _selectedProfileKey = key;
-                    _selectedProfileName = _profiles.firstWhere((p) => p['key'] == key)['name'];
                   });
                 },
               ),

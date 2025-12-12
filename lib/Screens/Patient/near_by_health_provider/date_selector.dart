@@ -38,7 +38,7 @@ class DateSelector extends StatelessWidget {
                 color: isSelected ? Colors.blue : Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: isSelected ? Colors.blue : Colors.grey.shade300),
-                boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))] : [],
+                boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 4, offset: const Offset(0, 2))] : [],
               ),
               child: Column(
                 children: [

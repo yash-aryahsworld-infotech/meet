@@ -1,8 +1,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:healthcare_plus/Screens/Chat/chat_screen.dart';
 import 'package:healthcare_plus/Screens/HealthProvider/documents/doctor_documents_viewer.dart';
+import 'package:healthcare_plus/video_call/video_call_helper.dart';
 
 class AppointmentModel {
   final String name;
@@ -15,6 +15,10 @@ class AppointmentModel {
   final String? appointmentId;
   final String? patientId;
   final String? bookingFor; // Family member info (e.g., "John (Father)")
+  final String? consultationType; // Online or Clinic
+  final int duration; // Appointment duration in minutes
+  final String? date; // Appointment date
+  final String? appointmentTime; // Appointment time (HH:MM AM/PM)
 
   AppointmentModel({
     required this.name,
@@ -27,6 +31,10 @@ class AppointmentModel {
     this.appointmentId,
     this.patientId,
     this.bookingFor,
+    this.consultationType,
+    this.duration = 30, // Default 30 minutes
+    this.date,
+    this.appointmentTime,
   });
 }
 
@@ -274,26 +282,58 @@ class PatientAppointmentList extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (data.bookingFor != null && data.bookingFor!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(Icons.family_restroom, size: 14, color: Colors.blue.shade600),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          // Booking For Info
+                          if (data.bookingFor != null && data.bookingFor!.isNotEmpty) ...[
+                            Text(
+                              data.bookingFor!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue.shade700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (data.consultationType != null && data.consultationType!.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(Icons.circle, size: 4, color: Colors.grey.shade400),
+                              ),
+                            ],
+                          ],
+                          // Consultation Type Indicator
+                          if (data.consultationType != null && data.consultationType!.isNotEmpty) ...[
+                            Icon(
+                              data.consultationType == 'Online' ? Icons.videocam : Icons.location_on,
+                              size: 12,
+                              color: data.consultationType == 'Online' ? Colors.green.shade600 : Colors.purple.shade600,
+                            ),
                             const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                data.bookingFor!,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.blue.shade700,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              data.consultationType!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: data.consultationType == 'Online' ? Colors.green.shade700 : Colors.purple.shade700,
+                              ),
+                            ),
+                          ] else ...[
+                            // Show "Type Unknown" for old appointments without type field
+                            Icon(Icons.help_outline, size: 12, color: Colors.grey.shade400),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Type Unknown',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade500,
                               ),
                             ),
                           ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -354,40 +394,6 @@ class PatientAppointmentList extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
 
-                // Chat Button
-                SizedBox(
-                  height: 36,
-                  width: 36,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            appointmentId: data.appointmentId ?? '',
-                            patientId: data.patientId ?? '',
-                            patientName: data.name,
-                            doctorId: '', // Will be set from SharedPreferences in ChatScreen
-                            doctorName: '', // Will be set from SharedPreferences in ChatScreen
-                            isDoctor: true,
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade50,
-                      foregroundColor: Colors.green,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Icon(Icons.chat_bubble_outline, size: 18),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
                 // Cancel Button
                 SizedBox(
                   height: 36,
@@ -410,35 +416,60 @@ class PatientAppointmentList extends StatelessWidget {
             ),
           ),
 
-          // ---------------- Video Call Button (Full Width) ----------------
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // Handle video call action
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Starting video call with ${data.name}...")),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+          // ---------------- Video Call Button (Full Width) - Only for Online Consultations ----------------
+          if (data.consultationType == 'Online')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (data.appointmentId == null || data.appointmentId!.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Appointment ID not found"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    // Calculate end time based on WHEN DOCTOR STARTS THE CALL
+                    // If slot is 50 minutes, timer shows exactly 50 minutes from NOW
+                    final now = DateTime.now();
+                    final scheduledEndTime = now.add(Duration(minutes: data.duration));
+                    
+                    debugPrint('🔍 DOCTOR STARTING CALL:');
+                    debugPrint('   Duration: ${data.duration} minutes');
+                    debugPrint('   Start time (NOW): $now');
+                    debugPrint('   End time (NOW + duration): $scheduledEndTime');
+                    debugPrint('   Timer will show: ${data.duration} minutes');
+                    
+                    await VideoCallHelper.startCallAsDoctor(
+                      context: context,
+                      appointmentId: data.appointmentId!,
+                      patientName: data.name,
+                      duration: data.duration,
+                      scheduledEndTime: scheduledEndTime,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                ),
-                icon: const Icon(Icons.videocam, size: 20),
-                label: const Text(
-                  "Start Video Call",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  icon: const Icon(Icons.videocam, size: 20),
+                  label: const Text(
+                    "Start Video Call",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

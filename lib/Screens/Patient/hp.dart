@@ -110,7 +110,7 @@ class _DoctorListComponentState extends State<DoctorListComponent> with WidgetsB
 
       // 3. Permission Granted & Service On -> Get Position
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high)
       );
       
       if (mounted) {

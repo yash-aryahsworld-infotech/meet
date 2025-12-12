@@ -95,6 +95,7 @@ class _ClinicVisitPageState extends State<ClinicVisitPage> {
           'distance': '2.5 km',
           'email': doctor['email']?.toString() ?? '',
           'languages': languagesList,
+          'type': 'Clinic', // Consultation type for clinic visit
         });
       });
 
